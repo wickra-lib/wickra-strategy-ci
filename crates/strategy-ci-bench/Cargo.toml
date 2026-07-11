@@ -1,0 +1,24 @@
+[package]
+name = "strategy-ci-bench"
+description = "Criterion benchmarks for the Wickra Strategy-CI core: run_suite scaling by test count and dataset size, on the parallel and sequential engines."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+strategy-ci-core.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+criterion.workspace = true
+
+[[bench]]
+name = "strategy_ci"
+harness = false
