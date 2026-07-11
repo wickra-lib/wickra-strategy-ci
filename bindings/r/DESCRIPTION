@@ -1,0 +1,17 @@
+Package: wickrastrategyci
+Type: Package
+Title: Test Trading Strategies in CI
+Version: 0.1.0
+Authors@R: person("kingchenc", role = c("aut", "cre"), email = "support@wickra.org")
+Description: R bindings for wickra-strategy-ci over its C ABI hub: create a
+    Session, golden-pin a strategy's backtest report, assert tolerances and
+    invariant properties, and fuzz-test against seeded data perturbations - the
+    same protocol as the CLI and every other binding.
+License: MIT + file LICENSE | Apache License 2.0
+URL: https://github.com/wickra-lib/wickra-strategy-ci
+BugReports: https://github.com/wickra-lib/wickra-strategy-ci/issues
+Encoding: UTF-8
+NeedsCompilation: yes
+SystemRequirements: the wickra-strategy-ci C ABI shared library (WKSTRATEGYCI_LIB)
+    and its header (WKSTRATEGYCI_INC).
+RoxygenNote: 7.3.2

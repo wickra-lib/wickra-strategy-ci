@@ -1,0 +1,4 @@
+useDynLib(wickrastrategyci, .registration = TRUE, .fixes = "C_")
+export(wkstrategyci_version)
+export(wkstrategyci_new)
+export(wkstrategyci_command)

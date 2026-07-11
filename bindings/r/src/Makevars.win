@@ -1,0 +1,4 @@
+# On Windows the C ABI DLL is linked directly (mingw resolves the import stubs
+# from wickra_strategy_ci.dll); the loader finds it via PATH at run time.
+PKG_CPPFLAGS = -I$(WKSTRATEGYCI_INC)
+PKG_LIBS = -L$(WKSTRATEGYCI_LIB) -l:wickra_strategy_ci.dll

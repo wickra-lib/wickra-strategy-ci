@@ -1,0 +1,7 @@
+# The wickra-strategy-ci C ABI header and library are provided out-of-tree via
+# the WKSTRATEGYCI_INC (include dir) and WKSTRATEGYCI_LIB (library dir)
+# environment variables, set by CI / the installer. The Makevars do not bake an
+# rpath; the loader must find the shared library via LD_LIBRARY_PATH /
+# DYLD_LIBRARY_PATH at run time.
+PKG_CPPFLAGS = -I$(WKSTRATEGYCI_INC)
+PKG_LIBS = -L$(WKSTRATEGYCI_LIB) -lwickra_strategy_ci
