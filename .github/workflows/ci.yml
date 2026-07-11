@@ -240,7 +240,7 @@ jobs:
         run: wasm-pack build --target nodejs
         working-directory: bindings/wasm
       - name: Assert wasm results match the golden fixtures
-        run: node --test tests/
+        run: node --test
         working-directory: bindings/wasm
 
   c-abi:
