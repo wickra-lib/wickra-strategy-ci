@@ -1,0 +1,93 @@
+# Wickra Strategy-CI — workspace.
+# A test runner for trading strategies built as one data-driven core
+# (`strategy-ci-core`): a serde StrategyTest model carries an opaque
+# `StrategySpec` sub-JSON that is forwarded verbatim to the `wickra-backtest`
+# engine, the resulting `BacktestReport` is golden-pinned and asserted (with
+# tolerances), and strategies are property-tested against deterministically
+# fuzzed data. The core is exposed as a JSON-over-C-ABI data API in ten
+# languages, mirroring the Wickra tiering (Rust core -> native Python/Node/WASM +
+# a C ABI hub for C/C++/C#/Go/Java/R), plus a reference CLI and a reusable
+# composite GitHub Action.
+#
+# The `members` list grows as crates are added, phase by phase; the final set is:
+#   crates/strategy-ci-core, crates/strategy-ci-cli, crates/strategy-ci-bench,
+#   bindings/c, bindings/python, bindings/node, bindings/wasm
+
+[workspace]
+resolver = "2"
+members = ["crates/strategy-ci-core", "crates/strategy-ci-cli", "crates/strategy-ci-bench", "bindings/c", "bindings/python", "bindings/node", "bindings/wasm", "examples/rust"]
+# The fuzz crate is its own (detached) workspace — cargo-fuzz builds it on a
+# nightly toolchain with sanitizer flags.
+exclude = ["fuzz"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.86"
+license = "MIT OR Apache-2.0"
+authors = ["wickra-lib"]
+repository = "https://github.com/wickra-lib/wickra-strategy-ci"
+homepage = "https://wickra.org"
+readme = "README.md"
+keywords = ["trading", "backtesting", "testing", "regression", "finance"]
+categories = ["finance", "development-tools::testing"]
+
+[workspace.dependencies]
+# Wickra ecosystem. wickra-data ships on crates.io (Candle + CSV loading). The
+# backtest engine is the system under test: strategy-ci calls its `run` and
+# golden-pins the `BacktestReport`, forwarding the opaque `StrategySpec` JSON
+# verbatim. It is consumed from git until its first crates.io release (its tag is
+# USER-GO gated); a `version` is pinned alongside `git` so the dependency is not a
+# wildcard (cargo-deny's `bans.wildcards = deny`).
+wickra-data = "0.9"
+wickra-backtest-core = { git = "https://github.com/wickra-lib/wickra-backtest", version = "0.1" }
+# Optional verifiable-report hash (feature `proof`): a deterministic report hash
+# from the wickra-proof core, surfaced in TestResult.report_hash. Consumed from
+# git; `version` pinned alongside `git` so it is not a wildcard.
+proof-core = { git = "https://github.com/wickra-lib/wickra-proof", version = "0.1", optional = true }
+# Workspace-internal crate, referenced by the CLI, bench and bindings.
+strategy-ci-core = { version = "0.1.0", path = "crates/strategy-ci-core" }
+# Serialization — the data-driven boundary (test/command/result as JSON).
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "1.1"
+# Exact decimal arithmetic where price/qty tolerances matter.
+rust_decimal = { version = "1", features = ["serde"] }
+thiserror = "2"
+# Data-parallel test execution across a suite.
+rayon = "1"
+# Deterministic PRNG for the fuzz-data generator (seeded; never thread_rng).
+rand = { version = "0.8", default-features = false, features = ["std"] }
+rand_pcg = "0.3"
+clap = { version = "4", features = ["derive"] }
+# C ABI header generation.
+cbindgen = "0.27"
+# Test/dev.
+criterion = "0.8"
+proptest = "1"
+
+[workspace.lints.rust]
+# The core and all bindings are safe Rust; the C ABI hub re-allows unsafe
+# locally (it must call across the FFI boundary).
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+# Allowed pedantic lints (same precedent as the wickra core).
+cast_precision_loss = "allow"
+cast_sign_loss = "allow"
+cast_possible_truncation = "allow"
+module_name_repetitions = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+must_use_candidate = "allow"
+too_many_lines = "allow"
+similar_names = "allow"
+
+[profile.release]
+# Panics must never unwind across the C ABI boundary: abort instead.
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
