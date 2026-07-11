@@ -21,15 +21,15 @@ pub fn check(property: &Property, flat: &BTreeMap<String, f64>) -> PropertyResul
             None => (true, None),
         },
         Property::MonotoneEquity => monotone_equity(flat),
-        Property::MaxDrawdownLe { value } => match flat.get("max_drawdown") {
-            Some(dd) if !dd.is_nan() => (*dd >= -value.abs(), None),
+        Property::MaxDrawdownLe { value } => match resolve(flat, "max_drawdown") {
+            Some(dd) if !dd.is_nan() => (dd >= -value.abs(), None),
             _ => (false, Some("missing: max_drawdown".into())),
         },
         Property::MinTradesGe { value } => cmp_ge(flat, "num_trades", *value),
         Property::SharpeGe { value } => cmp_ge(flat, "sharpe", *value),
         Property::PnlGe { value } => cmp_ge(flat, "pnl", *value),
-        Property::FieldInRange { field, min, max } => match flat.get(field) {
-            Some(v) if !v.is_nan() => (v >= min && v <= max, None),
+        Property::FieldInRange { field, min, max } => match resolve(flat, field) {
+            Some(v) if !v.is_nan() => (v >= *min && v <= *max, None),
             _ => (false, Some(format!("missing: {field}"))),
         },
     };
@@ -40,9 +40,18 @@ pub fn check(property: &Property, flat: &BTreeMap<String, f64>) -> PropertyResul
     }
 }
 
+/// Resolve a metric by its bare name, falling back to the `metrics.<name>` path.
+/// `wickra-backtest` reports nest their scalars under a `metrics` object, while
+/// a synthetic report may put them at the top level; both resolve here.
+fn resolve(flat: &BTreeMap<String, f64>, name: &str) -> Option<f64> {
+    flat.get(name)
+        .or_else(|| flat.get(&format!("metrics.{name}")))
+        .copied()
+}
+
 fn cmp_ge(flat: &BTreeMap<String, f64>, field: &str, value: f64) -> (bool, Option<String>) {
-    match flat.get(field) {
-        Some(v) if !v.is_nan() => (*v >= value, None),
+    match resolve(flat, field) {
+        Some(v) if !v.is_nan() => (v >= value, None),
         _ => (false, Some(format!("missing: {field}"))),
     }
 }
