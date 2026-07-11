@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>run</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../bindings/csharp/WickraStrategyCi/WickraStrategyCi.csproj" />
+  </ItemGroup>
+
+  <!-- Copy the dev-built native library next to the example so the resolver finds it. -->
+  <ItemGroup>
+    <Content Include="../../../target/release/wickra_strategy_ci.dll" Condition="Exists('../../../target/release/wickra_strategy_ci.dll')">
+      <Link>wickra_strategy_ci.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

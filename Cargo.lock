@@ -1423,6 +1423,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "wickra-strategy-ci-example"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "strategy-ci-core",
+]
+
+[[package]]
 name = "wickra-strategy-ci-node"
 version = "0.1.0"
 dependencies = [
