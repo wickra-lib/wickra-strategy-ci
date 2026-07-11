@@ -1,0 +1,80 @@
+# Dogfooding: run the composite action (uses: ./) against our own golden corpus,
+# both the happy path (must pass, must emit the expected SuiteResult) and a
+# deliberately broken test (the action must fail the job).
+name: action-selftest
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  selftest-pass:
+    name: action passes on the golden corpus
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: ./.github/actions/setup-rust
+      # Build the CLI from this checkout and put it on PATH so the action reuses
+      # it instead of downloading a (not-yet-published) release binary.
+      - name: Build and install the CLI from source
+        shell: bash
+        run: |
+          cargo install --path crates/strategy-ci-cli --root "${HOME}/.wickra" --locked
+          echo "${HOME}/.wickra/bin" >> "${GITHUB_PATH}"
+      - id: run
+        uses: ./
+        with:
+          tests: golden/tests
+          data: golden/data
+          format: json
+      - name: Assert the suite is all-green
+        shell: bash
+        env:
+          RESULT: ${{ steps.run.outputs.result }}
+        run: |
+          echo "$RESULT" | grep -q '"failed":0' || { echo "expected an all-green suite"; exit 1; }
+          echo "self-test PASS: $RESULT"
+
+  selftest-fail:
+    name: action fails on a broken test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: ./.github/actions/setup-rust
+      - name: Build and install the CLI from source
+        shell: bash
+        run: |
+          cargo install --path crates/strategy-ci-cli --root "${HOME}/.wickra" --locked
+          echo "${HOME}/.wickra/bin" >> "${GITHUB_PATH}"
+      # Corrupt one golden's pinned report so the diff must fail.
+      - name: Break a golden
+        shell: bash
+        run: |
+          mkdir -p broken
+          cp golden/tests/momentum.json broken/momentum.json
+          python3 - <<'PY'
+          import json
+          p = "broken/momentum.json"
+          t = json.load(open(p))
+          t["expected"]["metrics"]["pnl"] = 99999.0
+          json.dump(t, open(p, "w"))
+          PY
+      - id: run
+        continue-on-error: true
+        uses: ./
+        with:
+          tests: broken
+          data: golden/data
+          format: text
+      - name: Assert the action reported failure
+        shell: bash
+        run: |
+          if [ "${{ steps.run.outcome }}" != "failure" ]; then
+            echo "expected the action to fail on a broken test"; exit 1
+          fi
+          echo "self-test PASS: the action correctly failed"

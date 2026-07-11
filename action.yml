@@ -1,0 +1,96 @@
+name: "Wickra Strategy CI"
+description: "Golden-pin, regression-test and property/fuzz-test trading strategies in CI."
+branding:
+  icon: "check-circle"
+  color: "purple"
+
+inputs:
+  tests:
+    description: "Path to a StrategyTest file or directory."
+    required: true
+    default: "tests"
+  data:
+    description: "Path to the OHLCV data directory (*.csv)."
+    required: true
+    default: "data"
+  version:
+    description: "wickra-strategy-ci CLI version/tag to install (e.g. v0.1.0), or 'latest'."
+    required: false
+    default: "latest"
+  format:
+    description: "Output format: text | json."
+    required: false
+    default: "text"
+  fail-fast:
+    description: "Stop on the first failing test."
+    required: false
+    default: "false"
+
+outputs:
+  result:
+    description: "The JSON SuiteResult (populated when format=json)."
+    value: "${{ steps.run.outputs.result }}"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install the wickra-strategy-ci CLI
+      shell: bash
+      env:
+        WSCI_VERSION: "${{ inputs.version }}"
+        GH_TOKEN: "${{ github.token }}"
+      run: |
+        set -euo pipefail
+        # Reuse an already-installed CLI (a pre-install step, or the action's own
+        # self-test which builds from the checkout).
+        if command -v wickra-strategy-ci >/dev/null 2>&1; then
+          echo "wickra-strategy-ci already on PATH: $(command -v wickra-strategy-ci)"
+          exit 0
+        fi
+        # Map the runner to the released CLI asset name.
+        case "${RUNNER_OS}-${RUNNER_ARCH}" in
+          Linux-X64)    asset="wickra-strategy-ci-linux-x64" ;;
+          Linux-ARM64)  asset="wickra-strategy-ci-linux-arm64" ;;
+          macOS-X64)    asset="wickra-strategy-ci-darwin-x64" ;;
+          macOS-ARM64)  asset="wickra-strategy-ci-darwin-arm64" ;;
+          Windows-X64)  asset="wickra-strategy-ci-win32-x64.exe" ;;
+          *) echo "unsupported runner ${RUNNER_OS}-${RUNNER_ARCH}"; exit 1 ;;
+        esac
+        mkdir -p "${HOME}/.wickra/bin"
+        bin="${HOME}/.wickra/bin/wickra-strategy-ci"
+        [ "${RUNNER_OS}" = "Windows" ] && bin="${bin}.exe"
+
+        # Preferred path: download the released binary — no toolchain, fast.
+        tag="${WSCI_VERSION}"
+        if [ "${tag}" = "latest" ]; then
+          tag=$(gh release view --repo wickra-lib/wickra-strategy-ci --json tagName -q .tagName 2>/dev/null || echo "")
+        fi
+        if [ -n "${tag}" ] && gh release download "${tag}" --repo wickra-lib/wickra-strategy-ci \
+             --pattern "${asset}" --output "${bin}" 2>/dev/null; then
+          chmod +x "${bin}"
+          echo "installed ${asset} (${tag})"
+        else
+          # Pre-release fallback: build from git. Slower, but works before the
+          # first published release. Remove once releases carry CLI assets.
+          echo "no release asset for ${tag:-latest}; building from git (pre-release fallback)"
+          cargo install --git https://github.com/wickra-lib/wickra-strategy-ci \
+            wickra-strategy-ci --root "${HOME}/.wickra" --locked
+        fi
+        echo "${HOME}/.wickra/bin" >> "${GITHUB_PATH}"
+
+    - id: run
+      shell: bash
+      run: |
+        set -euo pipefail
+        extra=""
+        if [ "${{ inputs.fail-fast }}" = "true" ]; then extra="--fail-fast"; fi
+        wickra-strategy-ci run "${{ inputs.tests }}" \
+          --data "${{ inputs.data }}" \
+          --format "${{ inputs.format }}" ${extra} | tee out.txt
+        if [ "${{ inputs.format }}" = "json" ]; then
+          {
+            echo "result<<WSCI_EOF"
+            cat out.txt
+            echo "WSCI_EOF"
+          } >> "${GITHUB_OUTPUT}"
+        fi
