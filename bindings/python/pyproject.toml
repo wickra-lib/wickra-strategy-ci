@@ -1,0 +1,47 @@
+[build-system]
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "wickra-strategy-ci"
+version = "0.1.0"
+description = "Jest for trading strategies: golden-pin the backtest report, catch regressions in CI, property-test against fuzzed data."
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+authors = [{ name = "kingchenc", email = "support@wickra.org" }]
+requires-python = ">=3.9"
+keywords = ["trading", "backtesting", "testing", "regression", "continuous-integration"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Rust",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Topic :: Software Development :: Testing",
+]
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[project.urls]
+Homepage = "https://github.com/wickra-lib/wickra-strategy-ci"
+Repository = "https://github.com/wickra-lib/wickra-strategy-ci"
+Issues = "https://github.com/wickra-lib/wickra-strategy-ci/issues"
+
+[tool.maturin]
+manifest-path = "Cargo.toml"
+python-source = "python"
+module-name = "wickra_strategy_ci._wickra_strategy_ci"
+features = ["pyo3/extension-module"]
+strip = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra -q"
