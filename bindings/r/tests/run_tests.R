@@ -64,4 +64,61 @@ stopifnot(grepl('"diff":[]', rerun, fixed = TRUE))
 inband <- wkstrategyci_command(session, '{"cmd":"nope"}')
 stopifnot(grepl('"ok":false', inband, fixed = TRUE))
 
+## cross-language golden: build the run_suite command from the committed
+## golden/{tests,data} corpus and assert the response equals
+## golden/expected/suite.json byte-for-byte — the exact SuiteResult the Rust
+## core and every other binding produce. The corpus lives at the repo root;
+## walk up from the working directory to find it, skipping cleanly if absent.
+golden_dir <- function() {
+  d <- normalizePath(getwd(), mustWork = FALSE)
+  for (i in seq_len(10)) {
+    g <- file.path(d, "golden")
+    if (dir.exists(file.path(g, "tests"))) {
+      return(g)
+    }
+    d <- dirname(d)
+  }
+  NULL
+}
+
+load_golden_data <- function(g) {
+  parts <- character(0)
+  for (csv in sort(list.files(file.path(g, "data"), pattern = "\\.csv$", full.names = TRUE))) {
+    rows <- character(0)
+    lines <- readLines(csv, warn = FALSE)
+    for (idx in seq_along(lines)) {
+      line <- trimws(lines[idx])
+      if (!nzchar(line)) next
+      cols <- trimws(strsplit(line, ",")[[1]])
+      t <- suppressWarnings(as.integer(cols[1]))
+      if (is.na(t)) next
+      rows <- c(rows, paste0(
+        '{"time":', cols[1], ',"open":', cols[2], ',"high":', cols[3],
+        ',"low":', cols[4], ',"close":', cols[5], ',"volume":', cols[6], '}'
+      ))
+    }
+    name <- sub("\\.csv$", "", basename(csv))
+    parts <- c(parts, paste0('"', name, '":[', paste(rows, collapse = ","), "]"))
+  }
+  paste0("{", paste(parts, collapse = ","), "}")
+}
+
+g <- golden_dir()
+if (!is.null(g)) {
+  tests <- vapply(
+    sort(list.files(file.path(g, "tests"), pattern = "\\.json$", full.names = TRUE)),
+    function(p) trimws(paste(readLines(p, warn = FALSE), collapse = "\n")),
+    character(1)
+  )
+  suite_cmd <- paste0(
+    '{"cmd":"run_suite","tests":[', paste(tests, collapse = ","),
+    '],"data":', load_golden_data(g), "}"
+  )
+  got <- wkstrategyci_command(session, suite_cmd)
+  want <- trimws(paste(
+    readLines(file.path(g, "expected", "suite.json"), warn = FALSE), collapse = "\n"
+  ))
+  stopifnot(identical(trimws(got), want))
+}
+
 cat("wickra-strategy-ci R tests passed\n")

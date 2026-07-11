@@ -7,7 +7,33 @@ mod common;
 
 use std::fs;
 
-use strategy_ci_core::{run_suite, run_test, TestResult};
+use strategy_ci_core::{run_suite, run_test, SuiteResult, TestResult};
+
+/// Clear the optional `report_hash` on every result so the comparison is
+/// independent of the `proof` feature — the bindings and the default build never
+/// emit it, and the goldens are pinned without it.
+fn strip_hashes(mut suite: SuiteResult) -> SuiteResult {
+    for r in &mut suite.results {
+        r.report_hash = None;
+    }
+    suite
+}
+
+#[test]
+fn whole_suite_matches_golden_bytes() {
+    let tests = common::load_tests();
+    let data = common::load_data();
+    let suite = strip_hashes(run_suite(&tests, &data).expect("run suite"));
+
+    let path = common::golden_dir().join("expected").join("suite.json");
+    let want = fs::read_to_string(&path).expect("read suite.json");
+    let got = serde_json::to_string(&suite).expect("serialize suite");
+    assert_eq!(
+        got,
+        want.trim(),
+        "SuiteResult golden mismatch — this is the exact string every binding must emit"
+    );
+}
 
 #[test]
 fn suite_matches_expected_bytes() {
