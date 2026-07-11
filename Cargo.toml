@@ -18,7 +18,7 @@ resolver = "2"
 # Members are added phase by phase as their crates land; the final set is
 # strategy-ci-core, strategy-ci-cli, strategy-ci-bench, bindings/{c,python,node,wasm}
 # and examples/rust.
-members = ["crates/strategy-ci-core", "crates/strategy-ci-cli"]
+members = ["crates/strategy-ci-core", "crates/strategy-ci-cli", "bindings/c"]
 # The fuzz crate is its own (detached) workspace — cargo-fuzz builds it on a
 # nightly toolchain with sanitizer flags.
 exclude = ["fuzz"]

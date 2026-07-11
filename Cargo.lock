@@ -837,6 +837,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "wickra-strategy-ci-c"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "strategy-ci-core",
+]
+
+[[package]]
 name = "windows-link"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
