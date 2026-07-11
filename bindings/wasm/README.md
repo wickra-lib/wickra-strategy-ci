@@ -1,7 +1,7 @@
 # Wickra Strategy-CI — WASM
 
 WebAssembly bindings for the Wickra Strategy-CI test runner, compiled from Rust
-with [wasm-bindgen](https://rustwasm.github.io/wasm-bindgen/). A `Session` drives
+with [wasm-bindgen](https://wasm-bindgen.github.io/wasm-bindgen/). A `Session` drives
 the deterministic core over a JSON boundary, so a browser front-end runs against
 the exact same core as every other Wickra Strategy-CI binding.
 
