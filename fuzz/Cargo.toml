@@ -1,0 +1,47 @@
+[package]
+name = "wickra-strategy-ci-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+serde_json = "1"
+# The core under test, plus the engine used to run a synthesized test.
+strategy-ci-core = { path = "../crates/strategy-ci-core" }
+wickra-backtest-core = { git = "https://github.com/wickra-lib/wickra-backtest", version = "0.1" }
+
+# Detach from the parent workspace — cargo-fuzz builds this crate on its own with
+# sanitizer flags on a nightly toolchain.
+[workspace]
+
+[[bin]]
+name = "test_parse"
+path = "fuzz_targets/test_parse.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "property_eval"
+path = "fuzz_targets/property_eval.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "diff_reports"
+path = "fuzz_targets/diff_reports.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "run_test"
+path = "fuzz_targets/run_test.rs"
+test = false
+doc = false
+bench = false
