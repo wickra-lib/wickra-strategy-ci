@@ -53,12 +53,16 @@ wickra-strategy-ci bless tests/ --data data/
 
 ## As a GitHub Action
 
+Run your strategy tests on every push — a failing test fails the workflow:
+
 ```yaml
-- uses: wickra-lib/wickra-strategy-ci@v0
+- uses: wickra-lib/wickra-strategy-ci@v1
   with:
     tests: tests/
     data: data/
 ```
+
+See [docs/GITHUB_ACTION.md](docs/GITHUB_ACTION.md) for the full inputs/outputs.
 
 ## Use in any language
 
@@ -66,6 +70,18 @@ The core is exposed as a JSON-over-C-ABI data API in ten languages: Rust, Python
 Node.js and WASM natively, plus C, C++, C#, Go, Java and R over the C ABI hub. A
 `Session` handle plus `command(json) -> json` and `version` is the whole surface;
 the same test JSON produces a byte-identical result in every binding.
+
+```bash
+cargo add wickra-strategy-ci           # Rust
+pip install wickra-strategy-ci         # Python
+npm install wickra-strategy-ci         # Node.js
+dotnet add package Wickra.StrategyCi   # C#
+go get github.com/wickra-lib/wickra-strategy-ci/bindings/go   # Go
+```
+
+Java ships to Maven Central (`org.wickra:wickra-strategy-ci`), R to r-universe
+(`wickrastrategyci`), and the C ABI ships as a per-platform library with a
+vendored header. See each binding's `README.md` under [`bindings/`](bindings/).
 
 ## How it works
 
