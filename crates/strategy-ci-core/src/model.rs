@@ -78,6 +78,7 @@ pub enum Tolerance {
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Property {
     /// No numeric report field is NaN or infinite.
+    #[serde(rename = "no_nan")]
     NoNaN,
     /// `equity_curve` never falls (within a tiny f64-noise tolerance).
     MonotoneEquity,
