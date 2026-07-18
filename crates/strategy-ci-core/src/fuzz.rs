@@ -2,7 +2,7 @@
 //! from a seeded PRNG (`rand_pcg`); nothing here touches the thread RNG, so a
 //! `(seed, runs, perturbation)` triple is fully reproducible.
 
-use rand::Rng;
+use rand::{Rng, RngExt};
 
 use crate::model::Perturbation;
 use wickra_backtest_core::Candle;
