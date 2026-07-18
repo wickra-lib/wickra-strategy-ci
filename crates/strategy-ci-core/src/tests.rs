@@ -110,6 +110,16 @@ fn diff_reports_respects_tolerances_and_kinds() {
 }
 
 #[test]
+fn self_diff_of_overflowing_field_is_empty() {
+    // `round8` of a very large but finite value overflows to +inf, and
+    // `inf - inf` is NaN — which must not read as a mismatch. A report always
+    // diffs empty against itself with no tolerances, even for such fields.
+    assert!(round8(1e308).is_infinite());
+    let report = json!({ "huge": 1e308, "neg": -1e308, "ok": 1.5 });
+    assert!(diff_reports(&report, &report, &BTreeMap::new()).is_empty());
+}
+
+#[test]
 fn diff_star_prefix_tolerance_matches_indexed_keys() {
     let expected = json!({ "equity_curve": [1.0, 2.0, 3.0] });
     let actual = json!({ "equity_curve": [1.0001, 2.0001, 3.0001] });
