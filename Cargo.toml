@@ -62,8 +62,8 @@ thiserror = "2"
 # Data-parallel test execution across a suite.
 rayon = "1"
 # Deterministic PRNG for the fuzz-data generator (seeded; never thread_rng).
-rand = { version = "0.8", default-features = false, features = ["std"] }
-rand_pcg = "0.3"
+rand = { version = "0.9", default-features = false, features = ["std"] }
+rand_pcg = "0.10"
 clap = { version = "4", features = ["derive"] }
 # C ABI header generation.
 cbindgen = "0.27"
