@@ -40,6 +40,13 @@ fn within(expected: f64, actual: f64, tol: Tolerance) -> bool {
         return false;
     }
     let d = (actual - expected).abs();
+    // With neither side NaN, `d` is only NaN when both sides are the *same*
+    // infinity (`inf - inf`). That is a match — otherwise a report would diff
+    // non-empty against itself on an overflowing field. Opposite infinities
+    // give `d == inf`, which falls through and reads as a mismatch.
+    if d.is_nan() {
+        return true;
+    }
     match tol {
         Tolerance::Abs { value } => d <= value,
         Tolerance::Rel { value } => {

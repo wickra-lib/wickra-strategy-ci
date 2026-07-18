@@ -16,7 +16,7 @@ impl Perturbation {
             Perturbation::Jitter { amount } => candles
                 .iter()
                 .map(|c| {
-                    let mut scale = |x: f64| x * (1.0 + rng.gen_range(-amount..=amount));
+                    let mut scale = |x: f64| x * (1.0 + rng.random_range(-amount..=amount));
                     Candle {
                         time: c.time,
                         open: scale(c.open),
@@ -30,7 +30,7 @@ impl Perturbation {
             Perturbation::GapShock { amount } => candles
                 .iter()
                 .map(|c| Candle {
-                    close: c.close + rng.gen_range(-amount..=amount) * c.close,
+                    close: c.close + rng.random_range(-amount..=amount) * c.close,
                     ..*c
                 })
                 .collect(),
@@ -38,7 +38,7 @@ impl Perturbation {
                 let kept: Vec<Candle> = candles
                     .iter()
                     .copied()
-                    .filter(|_| rng.gen::<f64>() >= p)
+                    .filter(|_| rng.random::<f64>() >= p)
                     .collect();
                 // Always keep at least two candles so the engine has a stream to run.
                 if kept.len() >= 2 {
