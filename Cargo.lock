@@ -750,7 +750,7 @@ dependencies = [
 [[package]]
 name = "proof-core"
 version = "0.1.0"
-source = "git+https://github.com/wickra-lib/wickra-proof#ffca5b12d5aaf862189799d7e1233bfff0c5fe08"
+source = "git+https://github.com/wickra-lib/wickra-proof#7ec9b708cbeaeb2e6b442138ce267e2eea8c8a23"
 dependencies = [
  "blake3",
  "serde",
@@ -1383,7 +1383,7 @@ dependencies = [
 [[package]]
 name = "wickra-backtest-core"
 version = "0.1.0"
-source = "git+https://github.com/wickra-lib/wickra-backtest#496b168c5f15412b3d3becc9b92e1793c61264de"
+source = "git+https://github.com/wickra-lib/wickra-backtest#bd50f9733f875bf839ba5ac06b79ca7147d0f104"
 dependencies = [
  "schemars",
  "serde",
