@@ -750,7 +750,7 @@ dependencies = [
 [[package]]
 name = "proof-core"
 version = "0.1.0"
-source = "git+https://github.com/wickra-lib/wickra-proof#7ec9b708cbeaeb2e6b442138ce267e2eea8c8a23"
+source = "git+https://github.com/wickra-lib/wickra-proof#e3312a5a14f5bb6a90813db0ee4a24df62d8f336"
 dependencies = [
  "blake3",
  "serde",
@@ -1094,9 +1094,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.150"
+version = "1.0.151"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8014e44b4736ed0538adeecded0fce2a272f22dc9578a7eb6b2d9993c74cfb9"
+checksum = "c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14"
 dependencies = [
  "itoa",
  "memchr",
