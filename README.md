@@ -7,12 +7,20 @@
 [![CI](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/ci.svg)](https://github.com/wickra-lib/wickra-strategy-ci/actions/workflows/ci.yml)
 [![CodeQL](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/codeql.svg)](https://github.com/wickra-lib/wickra-strategy-ci/actions/workflows/codeql.yml)
 [![codecov](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/codecov.svg)](https://codecov.io/gh/wickra-lib/wickra-strategy-ci)
+[![GitHub release](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/release.svg)](https://github.com/wickra-lib/wickra-strategy-ci/releases/latest)
+[![crates.io](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/crates.svg)](https://crates.io/crates/wickra-strategy-ci-cli)
+[![PyPI](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/pypi.svg)](https://pypi.org/project/wickra-strategy-ci/)
+[![npm](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/npm.svg)](https://www.npmjs.com/package/wickra-strategy-ci)
+[![NuGet](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/nuget.svg)](https://www.nuget.org/packages/Wickra.StrategyCi)
+[![Maven Central](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/maven.svg)](https://central.sonatype.com/artifact/org.wickra/wickra-strategy-ci)
+[![Go module](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/go.svg)](https://pkg.go.dev/github.com/wickra-lib/wickra-strategy-ci-go)
+[![R-universe](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/r-universe.svg)](https://wickra-lib.r-universe.dev)
 [![License: MIT OR Apache-2.0](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/license.svg)](#license)
 [![OpenSSF Scorecard](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/scorecard.svg)](https://scorecard.dev/viewer/?uri=github.com/wickra-lib/wickra-strategy-ci)
-[![OpenSSF Best Practices](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/best-practices.svg)](https://www.bestpractices.dev/)
+[![OpenSSF Best Practices](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/best-practices.svg)](https://www.bestpractices.dev)
 [![Build provenance](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/provenance.svg)](https://github.com/wickra-lib/wickra-strategy-ci/attestations)
-[![Deterministic across 10 languages](https://img.shields.io/badge/deterministic%20across-10%20languages-3b82f6)](#use-in-any-language)
 [![Docs](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/docs.svg)](https://wickra.org)
+[![Verified across 10 languages](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/verified.svg)](golden/)
 
 ---
 
@@ -119,3 +127,26 @@ passing test attests only that a strategy's backtest report matches its pinned
 expectation under the given data — it makes no claim about the quality,
 profitability or future performance of any strategy. Trading carries risk; you
 are responsible for your own decisions.
+
+---
+
+<p align="center">
+  <a href="https://github.com/wickra-lib/wickra-strategy-ci">
+    <img alt="GitHub stars" src="https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/stars.svg">
+  </a>
+  <a href="https://github.com/wickra-lib/wickra-strategy-ci/network/members">
+    <img alt="GitHub forks" src="https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/forks.svg">
+  </a>
+  <a href="https://github.com/wickra-lib/wickra-strategy-ci/issues">
+    <img alt="GitHub issues" src="https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/issues.svg">
+  </a>
+</p>
+
+<p align="center">
+  Built on <a href="https://github.com/wickra-lib/wickra">Wickra</a>. If it saved you time, the cheapest way to say thanks is to ⭐ the repo.
+</p>
+
+<p align="center">
+  <img alt="wickra-strategy-ci star history" width="640"
+       src="https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/star-history.svg">
+</p>
