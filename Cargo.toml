@@ -42,7 +42,7 @@ categories = ["finance", "development-tools::testing"]
 # verbatim. It is consumed from git until its first crates.io release (its tag is
 # USER-GO gated); a `version` is pinned alongside `git` so the dependency is not a
 # wildcard (cargo-deny's `bans.wildcards = deny`).
-wickra-data = "0.9"
+wickra-data = "1.0"
 wickra-backtest-core = { git = "https://github.com/wickra-lib/wickra-backtest", version = "0.1" }
 # Optional verifiable-report hash (feature `proof`): a deterministic report hash
 # from the wickra-proof core, surfaced in TestResult.report_hash. Consumed from
