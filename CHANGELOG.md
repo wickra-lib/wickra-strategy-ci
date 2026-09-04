@@ -45,6 +45,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   declare `glibc`.
 - `bindings/r/DESCRIPTION` declared no lower bound on R.
 
+- **`wickra-data` was declared and used by nothing.** It sat in
+  `[workspace.dependencies]` pinned at `0.9` while the published crate is at
+  `1.0.4`, so it was simultaneously dead weight and stale. No crate imported it:
+  the CLI reads its own CSV and `Candle` is re-exported from the engine. Adding
+  it back would mean two crates defining the same row, so it is removed rather
+  than bumped.
+- Neither published crate declared `[package.metadata.docs.rs] all-features`, so
+  docs.rs would have rendered the default feature set only, leaving the optional
+  `proof` API and the rayon-backed `parallel` path invisible to a reader.
+- Neither published crate carried the licence texts it names. `cargo` decides
+  what to package from git, so an untracked copy makes `cargo publish` refuse the
+  tree and a gitignored one is dropped from the tarball; the copies are committed
+  beside each manifest.
+
 ### Added
 
 - **`bindings/r/configure` and `configure.win`.** The R binding had neither, so
@@ -63,6 +77,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `bindings/csharp/README.md` — the binding-level landing page. The one beside
   the `.csproj` is packaged into the `.nupkg` and is a different document.
 - `examples/wasm/run.mjs` — WASM was the only binding without a runnable example.
+
 
 
 - **Governance and community docs described a different product.** `SECURITY.md`,

@@ -12,6 +12,12 @@ readme.workspace = true
 keywords.workspace = true
 categories.workspace = true
 
+# docs.rs builds with every feature on, so the optional `proof` API and the
+# rayon-backed `parallel` path appear in the rendered documentation rather
+# than being invisible to anyone reading it.
+[package.metadata.docs.rs]
+all-features = true
+
 [lints]
 workspace = true
 
