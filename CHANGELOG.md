@@ -89,7 +89,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   carried over from `wickra-screener`. It now asks about tolerances, properties
   and perturbations.
 
-### Added
 
 - `LICENSES/MIT.txt` and `LICENSES/Apache-2.0.txt` — the SPDX licence texts at
   their conventional paths, alongside the existing `LICENSE-MIT` /
