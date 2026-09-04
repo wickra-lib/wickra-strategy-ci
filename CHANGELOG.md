@@ -27,6 +27,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   tag has been published yet.
 - `SECURITY.md` stated that security fixes target "the most recent published
   version" as though one existed.
+- The feature-request issue template asked for "a new comparator, a cross-section
+  or breadth metric" and described "the screen you can't express today" — text
+  carried over from `wickra-screener`. It now asks about tolerances, properties
+  and perturbations.
 
 ### Added
 
@@ -42,6 +46,26 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the badges and a worked `StrategyTest` example.
 - `README.md` and `ARCHITECTURE.md` now state that the golden diff compares
   numeric leaves only — strings, booleans and nulls are not pinned.
+- Five issue templates the blueprint requires: `bug_report_detailed`,
+  `feature_request_detailed`, `performance_regression`, `documentation` and
+  `question`. The detailed bug template asks whether a defect reproduces in a
+  second binding and on the sequential path, because a cross-language or
+  parallel-only disagreement is the class of bug this project most needs
+  reported precisely.
+- `.github/PULL_REQUEST_TEMPLATE/detailed.md` — the long-form template, covering
+  wire-format impact, binding parity across all ten languages, and determinism.
+  GitHub offers no picker for it, so `PULL_REQUEST_TEMPLATE.md` now says how to
+  reach it (`?template=detailed.md`).
+- `.github/codeql/codeql-config.yml`, referenced from the CodeQL workflow, so the
+  napi-derive glue in `bindings/node/src/lib.rs` stops producing an
+  `access-invalid-pointer` finding per exported class while the rule stays active
+  over `bindings/c/src`, where the real raw-pointer code lives.
+- CodeQL now analyses **C# and Java**, the two bindings that reach the core
+  across the C ABI. Both build with `build-mode: manual`; without a build no
+  dependency resolves and GitHub reports the analysis as low quality.
+- Dependabot now covers `fuzz/` (a detached workspace the root cargo entry cannot
+  reach) and `examples/go` (its own module). Both would otherwise never see a
+  dependency update.
 
 
 - **`strategy-ci-core`** — the data-driven test runner: a serde `StrategyTest`

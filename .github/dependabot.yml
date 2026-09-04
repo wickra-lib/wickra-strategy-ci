@@ -125,3 +125,37 @@ updates:
     groups:
       go-binding:
         patterns: ["*"]
+
+  # Fuzz targets. `fuzz/` is a detached workspace (cargo-fuzz builds it on a
+  # nightly toolchain), so the root cargo entry above does not reach it and its
+  # dependencies would otherwise never be updated.
+  - package-ecosystem: cargo
+    directory: "/fuzz"
+    schedule:
+      interval: monthly
+      time: "06:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "deps(cargo)"
+    groups:
+      fuzz:
+        patterns: ["*"]
+
+  # Go example. Its own module, separate from the binding's.
+  - package-ecosystem: gomod
+    directory: "/examples/go"
+    schedule:
+      interval: monthly
+      time: "06:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "deps(gomod)"
+    groups:
+      go-example:
+        patterns: ["*"]

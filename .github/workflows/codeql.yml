@@ -38,17 +38,60 @@ jobs:
             build-mode: none
           - language: javascript-typescript
             build-mode: none
+          # C# and Java reach the core through the C ABI hub, so a memory or
+          # lifetime mistake in either client is possible in a way it is not for
+          # the managed-only bindings. They are compiled rather than read as
+          # source: with `build-mode: none` no dependency resolves, and GitHub
+          # reports the result as low quality because most calls resolve to no
+          # target. `manual` over `autobuild` so it is visible which project is
+          # built — a scan that quietly covers the wrong tree looks identical to
+          # one that covers the right one.
+          - language: csharp
+            build-mode: manual
+          - language: java-kotlin
+            build-mode: manual
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
+      # The binding targets java.lang.foreign and the pom sets release 22, which
+      # is newer than the runner default.
+      - name: Set up JDK 25
+        if: matrix.language == 'java-kotlin'
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Set up .NET
+        if: matrix.language == 'csharp'
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: "8.0.x"
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
+          config-file: .github/codeql/codeql-config.yml
+
+      # CodeQL sees exactly what the compiler walks. The test project references
+      # the library, so building it puts both the hand-written P/Invoke surface
+      # and the code that calls it into the database. There is no solution file,
+      # so the project is named explicitly rather than pointing dotnet at the
+      # directory.
+      - name: Build the C# binding
+        if: matrix.language == 'csharp'
+        run: dotnet build bindings/csharp/WickraStrategyCi.Tests/WickraStrategyCi.Tests.csproj -c Release
+
+      # `-DskipTests`: CodeQL needs the classes compiled, not the suite run, and
+      # the tests need the C ABI library at runtime, which is not staged here.
+      - name: Build the Java binding
+        if: matrix.language == 'java-kotlin'
+        run: mvn -B -q -f bindings/java/pom.xml -DskipTests package
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
