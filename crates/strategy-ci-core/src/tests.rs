@@ -249,6 +249,48 @@ fn session_reports_errors_as_json_not_panics() {
     assert!(response.contains("missing dataset"));
 }
 
+/// `serde_json`'s default float parser is fast but not bit-exact: it can land one
+/// ULP from the value the text names, so `parse(serialize(x)) != x`. The
+/// `test_parse` fuzz target found it with `1888888888888288888888855`, which
+/// parsed to 1.8888888888882886e24 and came back as 1.888888888888289e24.
+///
+/// A golden is text that is re-parsed on every run, and the whole claim here is
+/// that a report is reproducible between runs and identical across ten
+/// languages, so an inexact parser undermines the premise. The workspace enables
+/// `serde_json`'s `float_roundtrip` feature; this pins that it stays enabled,
+/// because nothing else in the build would notice if it were dropped.
+#[test]
+fn extreme_floats_survive_a_json_round_trip() {
+    for text in [
+        "1888888888888288888888855",
+        "1.8888888888882886e24",
+        "1e308",
+        "2.2250738585072014e-308",
+        "0.1",
+    ] {
+        let parsed: f64 = serde_json::from_str(text).unwrap();
+        let reparsed: f64 = serde_json::from_str(&serde_json::to_string(&parsed).unwrap()).unwrap();
+        assert_eq!(
+            reparsed.to_bits(),
+            parsed.to_bits(),
+            "{text} did not round-trip"
+        );
+    }
+}
+
+/// The same property at the level the fuzz target asserts it: a parsed
+/// `StrategyTest` re-serializes and re-parses to an equal value. Structs
+/// deserialize positionally from a JSON array too, which is how the fuzzer
+/// reached this shape.
+#[test]
+fn strategy_test_round_trips_from_a_positional_array() {
+    let text = r#"["",1888888888888288888888855,"Syyyyy"]"#;
+    let test: StrategyTest = serde_json::from_str(text).unwrap();
+    let reparsed: StrategyTest =
+        serde_json::from_str(&serde_json::to_string(&test).unwrap()).unwrap();
+    assert_eq!(reparsed, test);
+}
+
 #[test]
 fn model_serde_round_trips() {
     let test = base_test();

@@ -54,7 +54,14 @@ blake3 = "1"
 strategy-ci-core = { version = "0.1.0", path = "crates/strategy-ci-core" }
 # Serialization — the data-driven boundary (test/command/result as JSON).
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+# `float_roundtrip`: serde_json's default float parser is fast but not
+# bit-exact -- it can land one ULP away from the value the text names, so
+# parse(serialize(x)) != x for some inputs. This project's whole claim is that a
+# report is byte-identical across ten languages and reproducible between runs,
+# and a golden is text that gets re-parsed on every run, so an inexact parser
+# undermines the premise directly. The fuzz target found it:
+# 1888888888888288888888855 parsed, serialized and re-parsed to a different f64.
+serde_json = { version = "1", features = ["float_roundtrip"] }
 toml = "1.1"
 # Exact decimal arithmetic where price/qty tolerances matter.
 rust_decimal = { version = "1", features = ["serde"] }

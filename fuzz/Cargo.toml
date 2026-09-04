@@ -9,7 +9,7 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
-serde_json = "1"
+serde_json = { version = "1", features = ["float_roundtrip"] }
 # The core under test, plus the engine used to run a synthesized test.
 strategy-ci-core = { path = "../crates/strategy-ci-core" }
 wickra-backtest-core = { git = "https://github.com/wickra-lib/wickra-backtest", version = "0.1" }
