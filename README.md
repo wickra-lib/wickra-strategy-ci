@@ -36,6 +36,15 @@ languages, plus a reusable composite GitHub Action.
 > a strategy through the engine, pins the resulting `BacktestReport`, and fails
 > the build when the numbers drift.
 
+```bash
+# Run a directory of strategy tests against a directory of OHLCV data.
+# Exits non-zero the moment a report drifts, so CI fails on it.
+wickra-strategy-ci run tests/ --data data/
+
+# Re-pin the goldens after a change you meant to make.
+wickra-strategy-ci bless tests/ --data data/
+```
+
 ## Why
 
 A backtest is only trustworthy if it is reproducible. Wickra's engine is
@@ -43,20 +52,46 @@ deterministic, so a strategy's report is a stable artifact you can pin — like 
 snapshot test. Strategy-CI turns that into a workflow:
 
 - **Golden tests** — pin a strategy's `BacktestReport` and fail when it changes
-  beyond a tolerance you set (exact, absolute, relative, or ULP).
-- **Property tests** — assert invariants that must hold for *any* run (equity
-  never negative, trade count within bounds, Sharpe finite, …).
+  beyond a tolerance you set — absolute or relative, per field, with exact
+  equality as the default when you set none.
+- **Property tests** — assert invariants that must hold for *any* run: no field
+  is NaN or infinite, drawdown stays inside a bound, the trade count clears a
+  floor, Sharpe or PnL clears a threshold, a named field stays in range.
 - **Fuzz tests** — perturb the input data with a seeded PRNG and re-run, catching
   strategies that only work on one specific history.
 
-## Quickstart
+## A test is a file, not a function
+
+There is no test API to learn. A test is JSON: which strategy, over which
+dataset, pinned to which report, under which tolerances.
+
+```jsonc
+{
+  "id": "crossover",
+  "dataset_ref": "sym-04",            // resolves to <data>/sym-04.csv
+  "strategy": { /* opaque StrategySpec, forwarded to wickra-backtest */ },
+  "expected": { /* the pinned BacktestReport — written by `bless` */ },
+  "tolerances": {
+    "*": { "kind": "rel", "value": 0.0001 },        // default for every field
+    "metrics.sharpe": { "kind": "abs", "value": 0.01 }
+  },
+  "property_checks": [
+    { "kind": "no_nan" },
+    { "kind": "max_drawdown_le", "value": 1.0 }
+  ],
+  "fuzz": { "seed": 42, "runs": 8,
+            "perturbation": { "kind": "jitter", "amount": 0.001 } }
+}
+```
+
+Write the strategy, run `bless` once to pin the report, and commit the file. From
+then on `run` fails the build whenever the numbers move further than you allowed.
+Working examples live in [`golden/tests/`](golden/tests/).
 
 ```bash
-# Run a directory of strategy tests against a dataset directory.
-wickra-strategy-ci run tests/ --data data/
-
-# Re-bless the golden reports after an intentional change.
-wickra-strategy-ci bless tests/ --data data/
+wickra-strategy-ci list  tests/                 # the test ids found under a path
+wickra-strategy-ci run   tests/ --data data/    # --format json for machine output
+wickra-strategy-ci bless tests/ --data data/    # re-pin after an intended change
 ```
 
 ## As a GitHub Action
@@ -101,10 +136,118 @@ deterministic and every binding forwards the core's response string unchanged,
 results are reproducible byte-for-byte across languages and between the parallel
 (rayon) and sequential (WASM) execution paths.
 
+The diff works on **numeric leaves**. Both reports are flattened to a sorted map
+of numbers — `metrics.sharpe`, `equity[3].equity` — rounded to eight decimals and
+compared field by field, reporting mismatches, fields that vanished and fields
+that appeared. Strings, booleans and nulls are not pinned, so a report field that
+is text is outside what a golden can catch.
+
+## Benchmarks
+
+A suite is cheap enough to gate every pull request. Median wall-clock for
+`run_suite`, parallel path, from the `strategy-ci-bench` criterion suite:
+
+| Dataset | Tests | Suite | Per test |
+|---------|-------|-------|----------|
+| small (200 bars)  | 100  | 13.4 ms | ~134 µs |
+| small (200 bars)  | 1000 | 143 ms  | ~143 µs |
+| large (2000 bars) | 100  | 156 ms  | ~1.56 ms |
+| large (2000 bars) | 1000 | 1.24 s  | ~1.24 ms |
+
+Per-test cost is dominated by the engine walking the price history — roughly
+linear in bar count, near-flat in test count once the rayon pool is saturated.
+The golden diff and property checks are `O(fields)` on top. A `fuzz` axis
+multiplies a test's cost by its `runs`. Full method and caveats in
+[BENCHMARKS.md](BENCHMARKS.md); reproduce with `cargo bench -p strategy-ci-bench`.
+
+## Requirements
+
+| To use | You need |
+|--------|----------|
+| The CLI or the GitHub Action | Nothing — the action installs a prebuilt binary, or builds from git as a fallback. |
+| Rust | 1.86 or newer (workspace MSRV). |
+| Python | 3.9 or newer. |
+| Node.js | 22 or newer. |
+| Go | 1.23 or newer. |
+| Java | 22 or newer. |
+| C / C++ / C# / R | The C ABI library plus its vendored header; see each binding's `README.md`. |
+
+Building from source additionally needs a Rust toolchain; the polyglot bindings
+need their own toolchain (`maturin`, `napi`, `wasm-pack`, `dotnet`, `go`, Maven,
+`R CMD`) only for the binding you are building.
+
+## Project layout
+
+```
+crates/strategy-ci-core     the runner: model, tolerances, properties, fuzz, session
+crates/strategy-ci-cli      the reference CLI (run / bless / list / version)
+crates/strategy-ci-bench    criterion benchmarks
+bindings/c                  the C ABI hub — every non-native binding goes through it
+bindings/python             PyO3 native binding
+bindings/node               napi-rs native binding
+bindings/wasm               wasm-bindgen binding (sequential path)
+bindings/{csharp,go,java,r} thin clients over the C ABI
+golden/                     cross-language fixtures: tests, data, expected reports
+examples/                   one runnable example per binding
+fuzz/                       cargo-fuzz targets (its own detached workspace)
+action.yml                  the composite GitHub Action
+```
+
+## Building everything from source
+
+```bash
+cargo build --workspace --all-features        # core, CLI, bench, native bindings
+cargo build -p wickra-strategy-ci-c --release # the C ABI library + header
+
+( cd bindings/python && maturin develop --release )
+( cd bindings/node   && npm ci && npm run build )
+( cd bindings/wasm   && wasm-pack build --target web )
+( cd bindings/java   && mvn -q package )
+( cd bindings/csharp && dotnet build )
+```
+
+The C ABI library is the prerequisite for the C, C++, C#, Go, Java and R
+bindings: build it first, then point `WKSTRATEGYCI_LIB` and `WKSTRATEGYCI_INC` at
+the resulting library and `bindings/c/include`.
+
+## Testing
+
+```bash
+cargo test --workspace --all-features         # core, integration, C ABI
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+cargo fmt --all --check
+
+( cd bindings/python && pytest tests -q )
+( cd bindings/node   && npm test )
+( cd bindings/go     && go test ./... )
+```
+
+Every binding runs the **same** `golden/` fixtures through its own
+`command(json) -> json` surface, so a passing suite is evidence that the
+languages agree byte-for-byte — not just that each one runs. The CLI is covered
+end-to-end against `golden/tests` in CI.
+
+## Ecosystem
+
+Strategy-CI is one repo in the [Wickra](https://github.com/wickra-lib) family:
+
+| Repo | What it does |
+|------|--------------|
+| [wickra](https://github.com/wickra-lib/wickra) | The indicator core — 514 streaming indicators, O(1) per tick, in ten languages. |
+| [wickra-backtest](https://github.com/wickra-lib/wickra-backtest) | The deterministic engine whose `BacktestReport` this repo pins. |
+| [wickra-data](https://github.com/wickra-lib/wickra) | Candle types and CSV/exchange loading. |
+| [wickra-proof](https://github.com/wickra-lib/wickra-proof) | Verifiable report hashes — the optional `proof` feature here. |
+| [wickra-synth](https://github.com/wickra-lib/wickra-synth) | Deterministic synthetic market data, useful as fuzz input. |
+| [wickra-exchange](https://github.com/wickra-lib/wickra-exchange) | Live and historical exchange connectivity. |
+
 ## Documentation
 
-See [docs/](docs/): `TESTS.md`, `PROPERTIES.md`, `TOLERANCES.md`, `FUZZING.md`,
-and `GITHUB_ACTION.md`.
+See [docs/](docs/) — [`TESTS.md`](docs/TESTS.md) for the test model,
+[`TOLERANCES.md`](docs/TOLERANCES.md) for the golden diff,
+[`PROPERTIES.md`](docs/PROPERTIES.md) for the invariants,
+[`FUZZING.md`](docs/FUZZING.md) for the perturbations,
+[`GITHUB_ACTION.md`](docs/GITHUB_ACTION.md) for the action, and
+[`Cookbook.md`](docs/Cookbook.md) for task-shaped recipes.
 
 ## Contributing
 

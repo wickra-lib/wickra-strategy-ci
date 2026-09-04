@@ -31,7 +31,9 @@ fuzz/                  cargo-fuzz targets (detached workspace)
   `StrategySpec` sub-JSON**: it is never parsed here, only forwarded to
   `wickra-backtest`.
 - **Tolerances** (`tolerance.rs`) — how a report field is compared to its pinned
-  value: exact, absolute, relative, or ULP.
+  value: `abs` or `rel`, resolved per field, falling back to exact equality
+  (`Abs { value: 0.0 }`) when a field names no tolerance. Only numeric leaves
+  take part in the diff; strings and booleans are not pinned.
 - **Properties** (`property.rs`) — invariants that must hold for any run,
   independent of the golden value.
 - **Fuzz** (`fuzz.rs`) — a seeded, deterministic data perturbation generator
