@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: wickra-lib/wickra-strategy-ci@v1
+      - uses: wickra-lib/wickra-strategy-ci@v0.1.0
         with:
           tests: tests          # a StrategyTest file or a directory of them
           data: data            # a directory of <SYMBOL>.csv OHLCV files
@@ -50,16 +50,19 @@ Consume it in a later step:
 
 ```yaml
       - id: sci
-        uses: wickra-lib/wickra-strategy-ci@v1
+        uses: wickra-lib/wickra-strategy-ci@v0.1.0
         with: { tests: tests, data: data, format: json }
       - run: echo '${{ steps.sci.outputs.result }}' | jq '.failed'
 ```
 
 ## Versioning
 
-Pin to the moving major tag `@v1` to get patch and minor updates automatically,
-or pin an exact release (`@v0.1.0`) for full reproducibility. The `v1` tag is
-advanced to each `v1.x.y` release.
+Pin an exact release (`@v0.1.0`). A moving major tag is advanced to each release
+under that major, so the tag for a `v0.1.0` release is **`v0`** — not `v1`.
+
+Pre-1.0 that distinction matters: semantic versioning lets a `0.x` minor bump
+break compatibility, so `@v0` floats across changes that `@v1` would not. Use it
+only once 1.0 has shipped.
 
 ## Blessing goldens
 

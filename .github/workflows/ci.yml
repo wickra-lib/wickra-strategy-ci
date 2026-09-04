@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+    branches: [main]
 
 permissions:
   contents: read
@@ -15,6 +16,7 @@ concurrency:
 jobs:
   test:
     name: Test (${{ matrix.os }}, ${{ matrix.features }})
+    timeout-minutes: 30 # backstop against a hung job, not a budget
     strategy:
       fail-fast: false
       matrix:
@@ -33,7 +35,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       # The PyO3 extension cdylib is built and tested by the `python` job via
       # maturin; the C ABI cdylib by the `c-abi` job. Exclude both here.
       - run: cargo build --workspace ${{ matrix.features }} --exclude wickra-strategy-ci-python --exclude wickra-strategy-ci-c
@@ -41,6 +43,7 @@ jobs:
 
   lint:
     name: Format & Clippy
+    timeout-minutes: 20 # backstop against a hung job, not a budget
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -49,13 +52,14 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           components: rustfmt, clippy
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - run: cargo fmt --all -- --check
       - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
       - run: cargo clippy --workspace --all-targets --no-default-features -- -D warnings
 
   msrv:
     name: MSRV workspace (1.86)
+    timeout-minutes: 30 # backstop against a hung job, not a budget
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -64,7 +68,7 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           toolchain: "1.86"
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       # The Node binding (napi 3) needs Rust 1.88 and is checked separately; the
       # Python binding needs maturin's platform link flags and is built by the
       # `python` job. The library, CLI, C ABI and WASM stay at 1.86.
@@ -75,6 +79,7 @@ jobs:
 
   msrv-node:
     name: MSRV node (1.88)
+    timeout-minutes: 30 # backstop against a hung job, not a budget
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -83,11 +88,12 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           toolchain: "1.88"
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - run: cargo build -p wickra-strategy-ci-node
 
   supply-chain:
-    name: cargo-deny
+    name: Supply-chain (cargo-deny + osv-scanner)
+    timeout-minutes: 30 # backstop: headroom for slow registry installs, not a budget
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -98,8 +104,35 @@ jobs:
           tool: cargo-deny
       - run: cargo deny check
 
+      # osv-scanner.toml existed and nothing ran it. The file is a VEX record --
+      # advisories assessed as not affecting this project, with the reasoning
+      # beside each -- and that assessment was load-bearing for nobody, because
+      # no workflow ever consulted it.
+      #
+      # cargo-deny above covers the Rust graph only. This covers the other six
+      # ecosystems -- npm, PyPI, Maven, NuGet, Go modules, R -- which had no
+      # vulnerability scanning in CI at all.
+      #
+      # --no-resolve turns off transitive resolution of *manifests*. The default
+      # enricher resolves each pom.xml against Maven Central; ours depends on
+      # org.wickra:wickra-strategy-ci at the version in the tree, which does not
+      # exist there until the release publishes it. Without the flag every
+      # version bump would fail this job on a lookup for the artefact the bump
+      # exists to create. Everything pinned in a lockfile -- Cargo.lock,
+      # package-lock.json, go.mod -- is still scanned in full and transitively,
+      # because a lockfile needs no resolution.
+      - name: osv-scanner
+        uses: google/osv-scanner-action/osv-scanner-action@6e4298ebc4db23e847df9b2e2de2939d6f066c67 # v2.5.1
+        with:
+          scan-args: |-
+            --recursive
+            --no-resolve
+            --config=osv-scanner.toml
+            ./
+
   coverage:
     name: Coverage
+    timeout-minutes: 40 # backstop against a hung job, not a budget
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -108,7 +141,7 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           components: llvm-tools-preview
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2.85.1
         with:
@@ -135,6 +168,7 @@ jobs:
 
   fuzz-smoke:
     name: Fuzz (smoke)
+    timeout-minutes: 30 # backstop against a hung job, not a budget
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -143,7 +177,7 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           toolchain: nightly
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: fuzz
       - name: Install cargo-fuzz
@@ -165,6 +199,7 @@ jobs:
 
   python:
     name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    timeout-minutes: 30 # backstop against a hung job, not a budget
     strategy:
       fail-fast: false
       matrix:
@@ -179,7 +214,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - uses: ./.github/actions/setup-rust
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - run: pip install maturin pytest
       - run: maturin build --out dist
         working-directory: bindings/python
@@ -188,6 +223,7 @@ jobs:
 
   node:
     name: Node ${{ matrix.node-version }} on ${{ matrix.os }}
+    timeout-minutes: 30 # backstop against a hung job, not a budget
     strategy:
       fail-fast: false
       matrix:
@@ -199,7 +235,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ matrix.node-version }}
@@ -221,6 +257,7 @@ jobs:
 
   wasm:
     name: WASM
+    timeout-minutes: 20 # backstop against a hung job, not a budget
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -229,7 +266,7 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           targets: wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Install wasm-pack
         uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2.85.1
         with:
@@ -249,6 +286,7 @@ jobs:
 
   c-abi:
     name: C ABI on ${{ matrix.os }}
+    timeout-minutes: 30 # backstop against a hung job, not a budget
     strategy:
       fail-fast: false
       matrix:
@@ -259,7 +297,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Install cbindgen
         uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2.85.1
         with:
@@ -287,6 +325,7 @@ jobs:
 
   go:
     name: Go on ${{ matrix.os }}
+    timeout-minutes: 20 # backstop against a hung job, not a budget
     strategy:
       fail-fast: false
       matrix:
@@ -301,7 +340,7 @@ jobs:
           go-version: "stable"
           cache: false
       - uses: ./.github/actions/setup-rust
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Build the C ABI library
         run: cargo build -p wickra-strategy-ci-c --release
       - name: Vendored header in sync with the C ABI
@@ -344,6 +383,7 @@ jobs:
 
   csharp:
     name: C# on ${{ matrix.os }}
+    timeout-minutes: 25 # backstop against a hung job, not a budget
     strategy:
       fail-fast: false
       matrix:
@@ -354,7 +394,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: "8.0"
@@ -367,6 +407,7 @@ jobs:
 
   java:
     name: Java on ${{ matrix.os }}
+    timeout-minutes: 25 # backstop against a hung job, not a budget
     strategy:
       fail-fast: false
       matrix:
@@ -377,7 +418,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       # The pom points native.lib.dir at target/debug, so build the debug profile.
       - name: Build the C ABI library
         run: cargo build -p wickra-strategy-ci-c
@@ -391,6 +432,7 @@ jobs:
 
   r:
     name: R on ${{ matrix.os }}
+    timeout-minutes: 30 # backstop against a hung job, not a budget
     strategy:
       fail-fast: false
       matrix:
@@ -404,7 +446,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Build the C ABI library
         run: cargo build -p wickra-strategy-ci-c --release
       - uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2.12.1
@@ -420,7 +462,8 @@ jobs:
           export WKSTRATEGYCI_INC="${WKSTRATEGYCI_INC//\\//}"
           export WKSTRATEGYCI_LIB="${WKSTRATEGYCI_LIB//\\//}"
           if command -v cygpath >/dev/null 2>&1; then
-            export PATH="$(cygpath -u "$WKSTRATEGYCI_LIB"):$PATH"
+            lib_unix=$(cygpath -u "$WKSTRATEGYCI_LIB")
+            export PATH="${lib_unix}:$PATH"
           else
             export LD_LIBRARY_PATH="$WKSTRATEGYCI_LIB:$LD_LIBRARY_PATH"
             export DYLD_LIBRARY_PATH="$WKSTRATEGYCI_LIB:$DYLD_LIBRARY_PATH"

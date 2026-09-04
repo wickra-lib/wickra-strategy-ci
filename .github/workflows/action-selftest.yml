@@ -15,9 +15,12 @@ permissions:
 jobs:
   selftest-pass:
     name: action passes on the golden corpus
+    timeout-minutes: 25 # backstop against a hung job, not a budget
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup-rust
       # Build the CLI from this checkout and put it on PATH so the action reuses
       # it instead of downloading a (not-yet-published) release binary.
@@ -42,9 +45,12 @@ jobs:
 
   selftest-fail:
     name: action fails on a broken test
+    timeout-minutes: 25 # backstop against a hung job, not a budget
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup-rust
       - name: Build and install the CLI from source
         shell: bash

@@ -99,11 +99,14 @@ wickra-strategy-ci bless tests/ --data data/    # re-pin after an intended chang
 Run your strategy tests on every push — a failing test fails the workflow:
 
 ```yaml
-- uses: wickra-lib/wickra-strategy-ci@v1
+- uses: wickra-lib/wickra-strategy-ci@v0.1.0
   with:
     tests: tests/
     data: data/
 ```
+
+Pin the exact release. Pre-1.0 the moving major tag is `@v0`, and it floats
+across minor versions, which may break.
 
 See [docs/GITHUB_ACTION.md](docs/GITHUB_ACTION.md) for the full inputs/outputs.
 

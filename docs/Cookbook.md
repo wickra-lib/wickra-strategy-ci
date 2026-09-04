@@ -41,14 +41,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: wickra-lib/wickra-strategy-ci@v1
+      - uses: wickra-lib/wickra-strategy-ci@v0.1.0
         with:
           tests: tests/
           data: data/
 ```
 
 The Action installs the released CLI and runs the suite; a failing test fails the
-job. The `@v1` moving major tag tracks the latest 1.x release.
+job. Pin the exact release: pre-1.0 the moving major tag is `@v0`, and a `0.x`
+minor bump is allowed to break compatibility.
 
 ## Add a property check
 

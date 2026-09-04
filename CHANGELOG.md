@@ -8,6 +8,23 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **JSON float parsing was not bit-exact, in a project whose claim is
+  byte-identical results.** `serde_json`'s default float parser is fast but can
+  land one ULP from the value the text names, so `parse(serialize(x)) != x` for
+  some inputs. The `test_parse` fuzz target found it on its first run after the
+  new workflows landed: `1888888888888288888888855` parsed to
+  `1.8888888888882886e24`, serialized, and came back as `1.888888888888289e24`.
+  A golden is text that is re-parsed on every run, so an inexact parser
+  undermines both reproducibility between runs and identity across the ten
+  bindings. The workspace and the fuzz crate now enable `serde_json`'s
+  `float_roundtrip` feature, with a unit test pinning the property, since nothing
+  else in the build would notice the feature being dropped.
+- **`js-yaml` 4.3.0 carried a high-severity advisory** (GHSA-5p4m-2wfm-xmqj,
+  CVSS 7.5), reachable as a transitive development dependency of
+  `@napi-rs/cli`. Found by the osv-scanner job the moment it was wired up;
+  `bindings/node/package-lock.json` now resolves 4.3.2.
+
+
 - **Governance and community docs described a different product.** `SECURITY.md`,
   `SUPPORT.md`, `GOVERNANCE.md`, `CONTRIBUTING.md`, the bug-report issue template
   and the pull-request template referred to a `ScanSpec`, a sample "universe" and
