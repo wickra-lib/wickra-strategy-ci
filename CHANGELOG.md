@@ -59,6 +59,21 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   tree and a gitignored one is dropped from the tarball; the copies are committed
   beside each manifest.
 
+- **The fuzz axis fed the engine candles no market could print.** `jitter`
+  scaled `open`, `high`, `low` and `close` by four independent draws, so
+  whenever the jitter exceeded a bar's own range the high landed below the low;
+  on a bar with a 0.1% range and a 5% jitter that happened in 84 of 200 runs.
+  `gap_shock` moved `close` without regard to the range it had to sit inside,
+  putting it outside `[low, high]`. `wickra-backtest` does not validate its
+  input, so those bars were accepted silently and any property that failed on
+  them said nothing about the strategy — the axis was reporting artefacts of its
+  own generator. Perturbed candles are now repaired to satisfy the OHLC ordering
+  (and non-negative volume) before they reach the engine. The repair keeps every
+  price the PRNG drew and only re-assigns which is the high and which the low,
+  so determinism is unchanged and it is a no-op on a bar that was already valid;
+  the committed goldens are unaffected. `docs/FUZZING.md` had already promised
+  "perturbed but well-formed data".
+
 ### Added
 
 - **`bindings/r/configure` and `configure.win`.** The R binding had neither, so
