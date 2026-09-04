@@ -8,6 +8,27 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **The composite action was advertised at a tag that will never exist.** README,
+  `docs/GITHUB_ACTION.md`, `docs/Cookbook.md` and the generated release notes all
+  showed `uses: wickra-lib/wickra-strategy-ci@v1`. The `major-tag` job derives
+  the moving tag from the release, so `v0.1.0` yields **`v0`** — a workflow
+  pinning `@v1` would fail to resolve. All four now pin the exact release, and
+  say why a floating `@v0` is the wrong default while a `0.x` minor is allowed to
+  break compatibility.
+- Every job now carries a `timeout-minutes` backstop; 22 of them had none and
+  inherited GitHub's six-hour default, so a wedged job held a runner for a
+  working day.
+- `ci.yml` built pull requests against any target branch; it now filters on
+  `main`.
+- The two `action-selftest` checkouts ran without `persist-credentials: false`,
+  leaving the job token in the runner's git config for the rest of the job. The
+  one remaining checkout that keeps credentials is `major-tag`, which pushes a
+  tag and needs them.
+- Pin comments on `Swatinem/rust-cache` and `lycheeverse/lychee-action` read
+  `# v2`, too coarse for Dependabot to act on. Both now name the patch version,
+  and rust-cache moves to the same v2.9.2 the rest of the organisation pins.
+
+
 - **Governance and community docs described a different product.** `SECURITY.md`,
   `SUPPORT.md`, `GOVERNANCE.md`, `CONTRIBUTING.md`, the bug-report issue template
   and the pull-request template referred to a `ScanSpec`, a sample "universe" and
@@ -33,6 +54,21 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and perturbations.
 
 ### Added
+
+- **`osv-scanner` now runs in CI.** `osv-scanner.toml` existed as a VEX record —
+  advisories assessed as not affecting this project, reasoning beside each — and
+  no workflow ever consulted it. `cargo-deny` covers the Rust graph only; this
+  covers the other six ecosystems (npm, PyPI, Maven, NuGet, Go modules, R), which
+  had no vulnerability scanning at all.
+- `actionlint.yml` — workflow correctness, the half zizmor does not cover:
+  unknown contexts, invalid `needs`, unused matrix keys, and through its bundled
+  shellcheck, the shell inside every `run:` block. The release pipeline alone
+  carries several hundred lines of it, unchecked until now.
+- `codspeed.yml` — instruction counts on every pull request. `bench.yml` runs on
+  a schedule and prints numbers a person has to read, so a regression surfaced
+  only if someone looked. The bench crate now builds against
+  `codspeed-criterion-compat`, which behaves as criterion does off a CodSpeed
+  runner.
 
 - `LICENSES/MIT.txt` and `LICENSES/Apache-2.0.txt` — the SPDX licence texts at
   their conventional paths, alongside the existing `LICENSE-MIT` /

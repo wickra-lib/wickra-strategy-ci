@@ -17,7 +17,11 @@ strategy-ci-core.workspace = true
 serde_json.workspace = true
 
 [dev-dependencies]
-criterion.workspace = true
+# Not the workspace criterion: this is CodSpeed's drop-in replacement, pulled in
+# under the name `criterion` so the benches keep their `use criterion::{...}`
+# imports unchanged. It is what `cargo codspeed` instruments; off a CodSpeed
+# runner it behaves as criterion does, so `cargo bench` locally is unaffected.
+criterion = { package = "codspeed-criterion-compat", version = "5.0.1", features = ["html_reports"] }
 
 [[bench]]
 name = "strategy_ci"
