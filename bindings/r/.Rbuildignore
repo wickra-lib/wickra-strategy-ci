@@ -1,0 +1,14 @@
+^src/wickra_strategy_ci\.dll$
+^src/wickra_strategy_ci\.def$
+^src/libwickra_strategy_ci\.dll\.a$
+^src/.*\.o$
+^src/wickrastrategyci\.dll$
+^src/wickrastrategyci\.so$
+^src/symbols\.rds$
+^src/wickra_strategy_ci\.h$
+^src/libwickra_strategy_ci\.(so|dylib)$
+^src/wickra-strategy-ci-c\.tar\.gz$
+^src/wickra-strategy-ci-c$
+^src/Makevars$
+^\.gitignore$
+^tests/golden_cross_language\.R$

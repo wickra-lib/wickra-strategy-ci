@@ -11,7 +11,7 @@ the same strategy, data, and JSON command protocol.
 | Rust | `rust/` | `cargo run -p wickra-strategy-ci-example` |
 | Python | `python/run.py` | `pip install wickra-strategy-ci && python examples/python/run.py` |
 | Node.js | `node/run.js` | `cd examples/node && npm install && node run.js` |
-| WASM | via the browser | see `bindings/wasm/README.md` |
+| WASM | `wasm/run.mjs` | `cd bindings/wasm && wasm-pack build --target nodejs` then `node examples/wasm/run.mjs` |
 | C / C++ | `c/` | `cmake -S examples/c -B examples/c/build && cmake --build examples/c/build && ctest --test-dir examples/c/build` |
 | Go | `go/run.go` | `cd examples/go && go run .` |
 | C# | `csharp/Run/` | `dotnet run --project examples/csharp/Run` |

@@ -455,9 +455,12 @@ jobs:
           use-public-rspm: true
       - name: Install and test the R binding
         shell: bash
-        # github.workspace is a backslash path on Windows; Makevars(.win) (sh) and
-        # mingw need forward slashes. The Makevars do not bake an rpath, so the
-        # native library must be on the loader path at run time.
+        # github.workspace is a backslash path on Windows; configure(.win) (sh)
+        # and mingw need forward slashes. Setting both variables takes configure's
+        # dev-override branch, so the binding builds against the library just
+        # built here rather than downloading a release asset that does not exist
+        # yet. The loader path is exported as well: configure bakes an rpath for
+        # the copy it stages, and this covers the run before install.
         run: |
           export WKSTRATEGYCI_INC="${WKSTRATEGYCI_INC//\\//}"
           export WKSTRATEGYCI_LIB="${WKSTRATEGYCI_LIB//\\//}"
@@ -470,3 +473,6 @@ jobs:
           fi
           R CMD INSTALL bindings/r
           Rscript bindings/r/tests/run_tests.R
+          # Not shipped in the tarball (.Rbuildignore), so it is run explicitly
+          # from the checkout, where golden/ exists.
+          Rscript bindings/r/tests/golden_cross_language.R

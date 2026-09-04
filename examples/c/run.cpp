@@ -1,13 +1,14 @@
-// A runnable C++ example against the wickra-strategy-ci C ABI: run a golden test
-// and confirm it passes. Uses the same length-out protocol as the C example, but
-// reads the response into a std::string.
-#include <cstdint>
+// A runnable C++ example against the wickra-strategy-ci C ABI: bless a test and
+// confirm the golden is pinned.
+//
+// Where run.c does the two-call buffer protocol and the free by hand, this uses
+// the header-only C++ hull (wickra_strategy_ci.hpp): the session frees itself at
+// scope exit and `command` returns a std::string. Compiling this example is what
+// keeps the hull honest -- it is the only thing that builds it.
 #include <iostream>
 #include <string>
 
-extern "C" {
-#include "wickra_strategy_ci.h"
-}
+#include "wickra_strategy_ci.hpp"
 
 namespace {
 const char *kCmd =
@@ -36,26 +37,17 @@ const char *kCmd =
 }  // namespace
 
 int main() {
-    std::cout << "wickra-strategy-ci " << wickra_strategy_ci_version() << "\n";
+    std::cout << "wickra-strategy-ci " << wickra::strategy_ci::version() << "\n";
 
-    WickraStrategyCi *session = wickra_strategy_ci_new();
-    if (session == nullptr) {
-        std::cerr << "failed to create session\n";
+    try {
+        wickra::strategy_ci::Session session;
+        const std::string response = session.command(kCmd);
+
+        const bool ok = response.find("\"expected\"") != std::string::npos;
+        std::cout << "blessed test: " << (ok ? "PASS (golden pinned)" : "FAIL") << "\n";
+        return ok ? 0 : 1;
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << "\n";
         return 1;
     }
-
-    int32_t len = wickra_strategy_ci_command(session, kCmd, nullptr, 0);
-    if (len < 0) {
-        std::cerr << "command failed (code " << len << ")\n";
-        wickra_strategy_ci_free(session);
-        return 1;
-    }
-    std::string buf(static_cast<size_t>(len) + 1, '\0');
-    wickra_strategy_ci_command(session, kCmd, &buf[0], buf.size());
-
-    bool ok = buf.find("\"expected\"") != std::string::npos;
-    std::cout << "blessed test: " << (ok ? "PASS (golden pinned)" : "FAIL") << "\n";
-
-    wickra_strategy_ci_free(session);
-    return ok ? 0 : 1;
 }

@@ -1,0 +1,107 @@
+#!/bin/sh
+# Resolve the wickra-strategy-ci C ABI (header + shared library) for the Unix build.
+#
+# Self-contained by default: download the prebuilt
+# wickra-strategy-ci-c-<triple>.tar.gz release asset that matches this package's
+# version and stage the shared library into src/, so the compiled
+# wickrastrategyci.so links against it and bundles it (via install.libs.R),
+# found post-install through an rpath ($ORIGIN on Linux, @loader_path on macOS).
+#
+# Set WKSTRATEGYCI_INC + WKSTRATEGYCI_LIB to build against a locally built C ABI
+# instead (dev override; e.g. `cargo build -p wickra-strategy-ci-c --release`).
+# That is the path CI takes, which is why CI alone never proves the download
+# branch works -- see scripts/check_r_abi_skew.py.
+#
+# Download and extraction use base R, always present at build time, so there is
+# no curl/wget system dependency.
+set -e
+
+inc=""
+lib=""
+
+# A freshly-cut GitHub release can briefly return 404 while its assets propagate
+# across the CDN, and a transient network blip should not fail the build either.
+# Retry base R's download.file with a backoff (~2 min total) rather than giving
+# up on the first miss.
+wkstrategyci_download() {
+  _url="$1"
+  _dest="$2"
+  _attempt=1
+  while [ "${_attempt}" -le 6 ]; do
+    if "${R_HOME}/bin/Rscript" -e "download.file('${_url}', '${_dest}', mode = 'wb', quiet = TRUE)"; then
+      return 0
+    fi
+    echo "wickra-strategy-ci: download attempt ${_attempt}/6 failed (${_url}); the release asset may still be propagating - retrying in 20s..."
+    sleep 20
+    _attempt=$((_attempt + 1))
+  done
+  echo "wickra-strategy-ci: failed to download ${_url} after 6 attempts"
+  return 1
+}
+
+if [ -n "${WKSTRATEGYCI_INC}" ] && [ -n "${WKSTRATEGYCI_LIB}" ]; then
+  echo "wickra-strategy-ci: using C ABI from WKSTRATEGYCI_INC / WKSTRATEGYCI_LIB (dev override)"
+  inc="${WKSTRATEGYCI_INC}"
+  lib="${WKSTRATEGYCI_LIB}"
+else
+  version=$(sed -n 's/^Version:[[:space:]]*//p' DESCRIPTION)
+  os=$(uname -s)
+  arch=$(uname -m)
+  case "${os}" in
+    Linux)
+      case "${arch}" in
+        x86_64) triple="x86_64-unknown-linux-gnu" ;;
+        aarch64 | arm64) triple="aarch64-unknown-linux-gnu" ;;
+        *) echo "wickra-strategy-ci: unsupported Linux arch '${arch}' - set WKSTRATEGYCI_INC/WKSTRATEGYCI_LIB"; exit 1 ;;
+      esac
+      ;;
+    Darwin)
+      case "${arch}" in
+        x86_64) triple="x86_64-apple-darwin" ;;
+        arm64 | aarch64) triple="aarch64-apple-darwin" ;;
+        *) echo "wickra-strategy-ci: unsupported macOS arch '${arch}' - set WKSTRATEGYCI_INC/WKSTRATEGYCI_LIB"; exit 1 ;;
+      esac
+      ;;
+    *)
+      echo "wickra-strategy-ci: unsupported OS '${os}' - set WKSTRATEGYCI_INC/WKSTRATEGYCI_LIB"
+      exit 1
+      ;;
+  esac
+  url="https://github.com/wickra-lib/wickra-strategy-ci/releases/download/v${version}/wickra-strategy-ci-c-${triple}.tar.gz"
+  echo "wickra-strategy-ci: downloading C ABI ${triple} for v${version}"
+  wkstrategyci_download "${url}" "src/wickra-strategy-ci-c.tar.gz" || exit 1
+  "${R_HOME}/bin/Rscript" -e "untar('src/wickra-strategy-ci-c.tar.gz', exdir = 'src/wickra-strategy-ci-c')"
+  inc="src/wickra-strategy-ci-c/wickra-strategy-ci-c-${triple}/include"
+  lib="src/wickra-strategy-ci-c/wickra-strategy-ci-c-${triple}/lib"
+fi
+
+# Stage the header and the platform shared library into src/ so the package
+# object links with -L. -lwickra_strategy_ci and install.libs.R bundles the lib.
+cp "${inc}/wickra_strategy_ci.h" src/wickra_strategy_ci.h
+staged=""
+for f in libwickra_strategy_ci.so libwickra_strategy_ci.dylib; do
+  if [ -f "${lib}/${f}" ]; then
+    cp "${lib}/${f}" "src/${f}"
+    staged="${f}"
+  fi
+done
+if [ -z "${staged}" ]; then
+  echo "wickra-strategy-ci: no libwickra_strategy_ci.so/.dylib found under ${lib}"
+  exit 1
+fi
+
+# rpath so the bundled lib is found next to the package object after install.
+case "$(uname -s)" in
+  Darwin)
+    rpath="-Wl,-rpath,@loader_path"
+    # Normalise the dylib id to @rpath so @loader_path resolution applies.
+    install_name_tool -id "@rpath/${staged}" "src/${staged}" 2>/dev/null || true
+    ;;
+  *)
+    rpath="-Wl,-rpath,'\$\$ORIGIN'"
+    ;;
+esac
+
+sed "s|@WKSTRATEGYCI_RPATH@|${rpath}|" src/Makevars.in > src/Makevars
+echo "wickra-strategy-ci: configured (bundled ${staged})"
+exit 0

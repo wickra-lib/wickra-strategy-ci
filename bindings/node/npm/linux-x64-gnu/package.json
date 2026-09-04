@@ -4,7 +4,9 @@
   "description": "Native binding for wickra-strategy-ci (Linux x64 GNU). Installed automatically as an optional dependency of wickra-strategy-ci on matching platforms.",
   "main": "wickra-strategy-ci.linux-x64-gnu.node",
   "files": [
-    "wickra-strategy-ci.linux-x64-gnu.node"
+    "wickra-strategy-ci.linux-x64-gnu.node",
+    "LICENSE-MIT",
+    "LICENSE-APACHE"
   ],
   "license": "MIT OR Apache-2.0",
   "engines": {
@@ -15,6 +17,9 @@
   ],
   "cpu": [
     "x64"
+  ],
+  "libc": [
+    "glibc"
   ],
   "repository": {
     "type": "git",

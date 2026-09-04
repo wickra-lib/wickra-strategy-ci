@@ -1,4 +1,7 @@
-# On Windows the C ABI DLL is linked directly (mingw resolves the import stubs
-# from wickra_strategy_ci.dll); the loader finds it via PATH at run time.
-PKG_CPPFLAGS = -I$(WKSTRATEGYCI_INC)
-PKG_LIBS = -L$(WKSTRATEGYCI_LIB) -l:wickra_strategy_ci.dll
+# Windows: configure.win stages wickra_strategy_ci.dll into src/ and builds the
+# mingw import library libwickra_strategy_ci.dll.a beside it, so both the header
+# and the library are found in the package's own src directory.
+# install.libs.R then bundles the DLL, which the loader finds next to the
+# package object.
+PKG_CPPFLAGS = -I.
+PKG_LIBS = -L. -lwickra_strategy_ci

@@ -260,6 +260,41 @@ jobs:
         working-directory: bindings/node
         run: npx napi artifacts --output-dir artifacts
 
+      # Every published package must carry the licence texts it claims. The
+      # manifests name MIT and Apache-2.0, but an SPDX expression is a reference
+      # to two documents, not the documents: a tarball that ships the expression
+      # alone leaves whoever installs it with terms they have to go and find.
+      #
+      # npm packs from the working tree, so the copies are staged here rather
+      # than committed. `npm pack --dry-run` then proves they will actually be
+      # in the tarball -- a `files` entry is a claim, and this is the check that
+      # the claim holds for all seven packages before any of them is published.
+      - name: Stage the licence texts and prove they will be packed
+        working-directory: bindings/node
+        run: |
+          set -euo pipefail
+          for dir in . npm/*/; do
+            cp ../../LICENSE-MIT ../../LICENSE-APACHE "$dir/"
+          done
+          for dir in . npm/*/; do
+            # The ${...} below are JavaScript template literals inside a
+            # single-quoted node script, not shell expansions.
+            # shellcheck disable=SC2016
+            ( cd "$dir" && npm pack --dry-run --json ) | node -e '
+              const chunks = [];
+              process.stdin.on("data", c => chunks.push(c));
+              process.stdin.on("end", () => {
+                const pkg = JSON.parse(chunks.join(""))[0];
+                const names = pkg.files.map(f => f.path);
+                const missing = ["LICENSE-MIT", "LICENSE-APACHE"].filter(n => !names.includes(n));
+                if (missing.length) {
+                  console.error(`::error::${pkg.name} would publish without ${missing.join(" and ")}`);
+                  process.exit(1);
+                }
+                console.log(`${pkg.name}: licence texts present`);
+              });'
+          done
+
       - name: Publish platform packages (idempotent)
         working-directory: bindings/node
         env:

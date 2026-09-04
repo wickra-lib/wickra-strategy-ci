@@ -23,6 +23,46 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   CVSS 7.5), reachable as a transitive development dependency of
   `@napi-rs/cli`. Found by the osv-scanner job the moment it was wired up;
   `bindings/node/package-lock.json` now resolves 4.3.2.
+- **The shipped R test reached outside the package.** `tests/run_tests.R` walked
+  up to ten directories looking for `golden/`. `R CMD check` runs the shipped
+  tests inside an unpacked tarball, where no repository lies above the package,
+  so the cross-language comparison either skipped silently on every real check
+  run or bound to an unrelated directory that happened to carry that name. It is
+  now split: `run_tests.R` is self-contained, and the golden comparison lives in
+  `tests/golden_cross_language.R`, which is `.Rbuildignore`d and run from CI
+  against the checkout.
+- **The npm platform packages would have published without their licence
+  texts.** All seven manifests name `MIT OR Apache-2.0`, but an SPDX expression
+  is a reference to two documents, not the documents. The `files` field now lists
+  them, and a release step stages the copies and proves with `npm pack
+  --dry-run` that they are in each tarball before anything is published.
+- **The main npm package shipped the platform stubs inside itself.** Its `files`
+  listed `npm` and `*.node`; the native binaries reach a consumer through the
+  per-platform packages in `optionalDependencies`, so the tarball is now the JS
+  loader, the types and the licences.
+- **The Linux npm stubs did not declare `libc`.** Without it npm installs the
+  gnu package on a musl system, where the binary cannot load. Both gnu stubs now
+  declare `glibc`.
+- `bindings/r/DESCRIPTION` declared no lower bound on R.
+
+### Added
+
+- **`bindings/r/configure` and `configure.win`.** The R binding had neither, so
+  it could only ever build against a C ABI already present in the environment —
+  which is what CI provides and what a user installing from r-universe does not
+  have. Both now download the `wickra-strategy-ci-c-<triple>.tar.gz` asset
+  matching `DESCRIPTION: Version`, stage it into `src/`, and bake an rpath
+  ($ORIGIN / @loader_path) so the bundled library is found after install.
+  `src/Makevars.in` and `src/install.libs.R` come with them; `src/Makevars` is
+  now generated rather than committed.
+- **`bindings/c/include/wickra_strategy_ci.hpp`** — the C++ hull. The C ABI hands
+  out a handle that must be freed exactly once and a two-call buffer protocol for
+  `command`, and every C++ caller re-implemented both by hand. `Session` is a
+  move-only RAII owner and `command` returns a `std::string`. `examples/c/run.cpp`
+  now uses it, which is what keeps it compiling.
+- `bindings/csharp/README.md` — the binding-level landing page. The one beside
+  the `.csproj` is packaged into the `.nupkg` and is a different document.
+- `examples/wasm/run.mjs` — WASM was the only binding without a runnable example.
 
 
 - **Governance and community docs described a different product.** `SECURITY.md`,
