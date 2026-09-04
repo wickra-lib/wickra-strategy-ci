@@ -27,10 +27,101 @@ env:
 
 jobs:
   # --------------------------------------------------------------------------
-  # crates.io: strategy-ci-core then the wickra-strategy-ci-cli crate (wickra-strategy-ci binary)
+  # The gate. Two jobs in one, both about not publishing something by accident.
+  #
+  # Ref guard: `workflow_dispatch` accepts any ref, so a dispatch from main would
+  # have run the whole pipeline and published whatever main happened to contain,
+  # under a version string taken from a manifest rather than from a tag. Every
+  # publish job now sits behind this, and it refuses anything that is not a v*
+  # tag.
+  #
+  # Build gate: without it each publish job depended only on the artefacts it
+  # needed, so a failing wheel build stopped PyPI and left crates.io, npm and
+  # NuGet to publish anyway. A release that lands on four registries out of seven
+  # cannot be rolled back -- the versions are burned. Publishing now begins only
+  # once every build has succeeded.
+  # --------------------------------------------------------------------------
+  gate:
+    name: Verify the ref and gate every publish
+    timeout-minutes: 45 # above the 30-minute CI wait below, not a budget
+    needs: [python-wheels, python-sdist, node-build, cli-binaries, c-abi-build]
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.check.outputs.tag }}
+      version: ${{ steps.check.outputs.version }}
+    permissions:
+      contents: read
+      checks: read
+    steps:
+      - id: check
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The ref, not the ref name: a branch called v1 would pass a name test.
+          case "${GITHUB_REF}" in
+            refs/tags/v[0-9]*) ;;
+            *)
+              echo "::error::release runs from a v* tag only; got '${GITHUB_REF}'."
+              exit 1
+              ;;
+          esac
+          echo "tag=${GITHUB_REF_NAME}" >> "${GITHUB_OUTPUT}"
+          echo "version=${GITHUB_REF_NAME#v}" >> "${GITHUB_OUTPUT}"
+          echo "::notice::ref accepted: ${GITHUB_REF}"
+
+      # ci.yml does not fire on a tag push, so the CI that matters is the run on
+      # this commit from when it was on main. Reading it is the point; reading it
+      # *correctly* is the subtlety. A run still in progress is not a failed run,
+      # and treating the two alike refuses correct tags. So this waits for a
+      # decision and fails only on one that went against us.
+      - name: Wait for CI on this commit to decide
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          deadline=$(( SECONDS + 1800 ))
+          while :; do
+            # Exclude this workflow's own checks; they cannot be finished while
+            # this step is what is running.
+            states=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/check-runs" \
+                       --paginate --jq '.check_runs[]
+                         | select(.name | test("Release|gate|Attest|Publish|Mirror") | not)
+                         | "\(.status) \(.conclusion)"' || true)
+            if [ -z "${states}" ]; then
+              echo "::notice::no other check runs on ${GITHUB_SHA}; nothing to wait for."
+              break
+            fi
+            pending=$(printf '%s\n' "${states}" | grep -cE '^(queued|in_progress)' || true)
+            failed=$(printf '%s\n' "${states}" \
+                       | grep -E '^completed' \
+                       | grep -cE '(failure|timed_out|cancelled)$' || true)
+            if [ "${failed}" -gt 0 ]; then
+              echo "::error::CI on ${GITHUB_SHA} has ${failed} failed check(s); refusing to publish."
+              printf '%s\n' "${states}"
+              exit 1
+            fi
+            if [ "${pending}" -eq 0 ]; then
+              echo "::notice::CI on ${GITHUB_SHA} is decided and green."
+              break
+            fi
+            if [ "${SECONDS}" -ge "${deadline}" ]; then
+              echo "::error::CI on ${GITHUB_SHA} still undecided after 30 minutes (${pending} pending)."
+              exit 1
+            fi
+            echo "${pending} check(s) still running; waiting 30s..."
+            sleep 30
+          done
+          echo "::notice::gate open for ${GITHUB_REF_NAME}; every build succeeded."
+
+  # --------------------------------------------------------------------------
+  # crates.io: strategy-ci-core, then the wickra-strategy-ci crate (which carries
+  # the CLI binary of the same name). The directory is crates/strategy-ci-cli; the
+  # package is not.
   # --------------------------------------------------------------------------
   cargo-publish:
     name: Publish to crates.io
+    needs: gate
     timeout-minutes: 45
     runs-on: ubuntu-latest
     environment: release
@@ -59,9 +150,9 @@ jobs:
       - name: Wait for crates.io index to refresh
         run: sleep 45
 
-      - name: Publish wickra-strategy-ci-cli (idempotent)
+      - name: Publish wickra-strategy-ci (idempotent)
         run: |
-          if out=$(cargo publish -p wickra-strategy-ci-cli --token "$CARGO_REGISTRY_TOKEN" 2>&1); then
+          if out=$(cargo publish -p wickra-strategy-ci --token "$CARGO_REGISTRY_TOKEN" 2>&1); then
             echo "$out"
           elif echo "$out" | grep -q "already uploaded\|already exists"; then
             echo "skip: already published"
@@ -76,7 +167,7 @@ jobs:
       - name: Build .crate files for release attachment
         run: |
           cargo package -p strategy-ci-core
-          cargo package -p wickra-strategy-ci-cli
+          cargo package -p wickra-strategy-ci
 
       - name: Upload .crate files
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -95,7 +186,7 @@ jobs:
           cargo cyclonedx --format json --top-level
           mkdir -p sboms
           cp crates/strategy-ci-core/strategy-ci-core.cdx.json sboms/
-          cp crates/wickra-strategy-ci-cli/wickra-strategy-ci-cli.cdx.json sboms/
+          cp crates/strategy-ci-cli/wickra-strategy-ci.cdx.json sboms/
           ls -lh sboms/
 
       - name: Upload SBOMs
@@ -170,7 +261,7 @@ jobs:
   python-publish:
     name: Publish to PyPI
     timeout-minutes: 45
-    needs: [python-wheels, python-sdist]
+    needs: [gate, python-wheels, python-sdist]
     runs-on: ubuntu-latest
     environment: release
     steps:
@@ -232,7 +323,7 @@ jobs:
   node-publish:
     name: Publish to npm
     timeout-minutes: 45
-    needs: node-build
+    needs: [gate, node-build]
     runs-on: ubuntu-latest
     environment: release
     permissions:
@@ -384,6 +475,7 @@ jobs:
   # --------------------------------------------------------------------------
   wasm-publish:
     name: Publish wickra-strategy-ci-wasm to npm
+    needs: gate
     timeout-minutes: 45
     runs-on: ubuntu-latest
     environment: release
@@ -470,7 +562,7 @@ jobs:
           targets: ${{ matrix.target }}
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Build the CLI binary
-        run: cargo build -p wickra-strategy-ci-cli --release --target ${{ matrix.target }}
+        run: cargo build -p wickra-strategy-ci --release --target ${{ matrix.target }}
       - name: Package the binary
         shell: bash
         run: |
@@ -547,7 +639,7 @@ jobs:
   csharp-publish:
     name: Publish to NuGet
     timeout-minutes: 45
-    needs: c-abi-build
+    needs: [gate, c-abi-build]
     runs-on: ubuntu-latest
     environment: release
     permissions:
@@ -624,7 +716,7 @@ jobs:
   java-publish:
     name: Publish to Maven Central
     timeout-minutes: 45
-    needs: c-abi-build
+    needs: [gate, c-abi-build]
     runs-on: ubuntu-latest
     environment: release
     steps:
@@ -679,6 +771,18 @@ jobs:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: mvn -B -f bindings/java -Prelease deploy -DskipTests
 
+      # The JAR reached Maven Central and nowhere else, so the GitHub Release
+      # listed every other artefact and not this one. Anyone pinning a release by
+      # its assets had no Java artefact to check against.
+      - name: Upload the Maven artefacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: java-artifacts
+          path: |
+            bindings/java/target/*.jar
+            bindings/java/target/*.jar.asc
+          if-no-files-found: error
+
   # Mirror the in-repo Go module (bindings/go) to the standalone
   # wickra-strategy-ci-go repository so `go get
   # github.com/wickra-lib/wickra-strategy-ci-go` builds with no extra steps. The
@@ -691,7 +795,7 @@ jobs:
   go-mirror:
     name: Mirror the Go module to wickra-strategy-ci-go
     timeout-minutes: 45 # backstop only: release build/publish jobs compile from source (vendored OpenSSL) and must not be killed mid-build; far above the ~10 min real runtime
-    needs: c-abi-build
+    needs: [gate, c-abi-build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -710,8 +814,15 @@ jobs:
           set -e
           out=wickra-strategy-ci-go-module
           mkdir -p "$out/include" "$out/lib"
-          # Single-package Go source + vendored C ABI header.
-          cp bindings/go/*.go "$out/"
+          # Single-package Go source + vendored C ABI header. Test files are
+          # deliberately excluded: they read the golden/ corpus from above the
+          # module, which exists in this repository and nowhere in a consumer's
+          # module cache, so shipping them makes `go test ./...` fail for anyone
+          # who depends on the mirror.
+          for f in bindings/go/*.go; do
+            case "$f" in *_test.go) continue ;; esac
+            cp "$f" "$out/"
+          done
           cp bindings/go/include/wickra_strategy_ci.h "$out/include/"
           cp bindings/go/README.md "$out/"
           # Ship the dual license so pkg.go.dev detects a redistributable license.
@@ -746,6 +857,26 @@ jobs:
           done
           echo "assembled module:"; find "$out" -type f | sort
 
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "stable"
+          cache: false
+
+      # Nothing built the assembled tree before it was pushed and tagged. A Go
+      # tag is immutable on the module proxy, so a mirror that does not compile
+      # is permanent: the only remedy is a new version. This builds it exactly
+      # as a consumer would -- cgo against the staged linux_amd64 library, from
+      # the module directory itself, with no repository above it.
+      - name: Prove the assembled module compiles
+        working-directory: wickra-strategy-ci-go-module
+        shell: bash
+        run: |
+          set -euo pipefail
+          go build ./...
+          go vet ./...
+          echo "::notice::the mirrored module compiles"
+
       - name: Push to wickra-strategy-ci-go and tag the release
         shell: bash
         env:
@@ -779,7 +910,11 @@ jobs:
   github-release:
     name: Attach assets to the draft GitHub Release
     timeout-minutes: 45
-    needs: [cargo-publish, python-publish, node-publish, wasm-publish, cli-binaries, c-abi-build]
+    # Every producer, not just some. csharp-publish, java-publish and go-mirror
+    # were missing, so their artefacts could fail to publish while the release
+    # went out reporting success.
+    needs: [cargo-publish, python-publish, node-publish, wasm-publish, cli-binaries,
+            c-abi-build, csharp-publish, java-publish, go-mirror]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -825,8 +960,36 @@ jobs:
           find artifacts -type f -name "*.crate" -exec cp {} release-assets/ \;
           find artifacts -type f -name "*.cdx.json" -exec cp {} release-assets/ \;
           find artifacts -type f -name "*.nupkg" -exec cp {} release-assets/ \;
+          find artifacts -type f -name "*.jar" -exec cp {} release-assets/ \;
+          find artifacts -type f -name "*.jar.asc" -exec cp {} release-assets/ \;
           ls -lh release-assets/
           echo "asset-count=$(find release-assets/ -type f | wc -l)"
+
+      # Rendered from .github/release-notes.md rather than inlined here. The
+      # template shows how to reference the composite action, and such an example
+      # inside a workflow file is indistinguishable from a real step to anything
+      # auditing for unpinned actions.
+      - name: Compose the release notes
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+          VERSION: ${{ steps.tag.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Drop the template's own HTML comment header (it documents the
+          # template, not the release), then substitute only TAG and VERSION so
+          # any other shell-looking text passes through untouched.
+          sed '/^<!--/,/^-->/d' .github/release-notes.md \
+            | envsubst '${TAG} ${VERSION}' > release-notes.md
+          # A template that still carries an unsubstituted placeholder would ship
+          # "${TAG}" verbatim into the published notes.
+          if grep -q '\${' release-notes.md; then
+            echo "::error::release-notes.md still contains an unsubstituted placeholder:"
+            grep -n '\${' release-notes.md
+            exit 1
+          fi
+          head -1 release-notes.md
+
       - name: Create / update the draft GitHub Release with assets
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
@@ -836,61 +999,15 @@ jobs:
           generate_release_notes: true
           fail_on_unmatched_files: false
           draft: true
-          body: |
-            wickra-strategy-ci ${{ github.ref_name }} — Jest for trading strategies: golden-pin a strategy's backtest report, catch regressions in CI, and property/fuzz-test it against perturbed data. Native Rust, Python, Node.js, WASM plus a C ABI hub for C, C++, C#, Go, Java, R, and a composite GitHub Action.
-
-            ### Install
-
-            ```bash
-            cargo install wickra-strategy-ci-cli
-            pip install wickra-strategy-ci
-            npm install wickra-strategy-ci
-            dotnet add package Wickra.StrategyCi
-            go get github.com/wickra-lib/wickra-strategy-ci/bindings/go
-            ```
-
-            GitHub Action:
-
-            ```yaml
-            - uses: wickra-lib/wickra-strategy-ci@${{ steps.tag.outputs.tag }}
-              with: { tests: tests, data: data }
-            ```
-
-            Java (Maven Central):
-
-            ```xml
-            <dependency>
-              <groupId>org.wickra</groupId>
-              <artifactId>wickra-strategy-ci</artifactId>
-              <version>${{ steps.tag.outputs.version }}</version>
-            </dependency>
-            ```
-
-            R (r-universe):
-
-            ```r
-            install.packages("wickrastrategyci", repos = "https://wickra-lib.r-universe.dev")
-            ```
-
-            ### Attached assets
-
-            Pre-built artefacts for every supported platform — the same files this
-            workflow run published to crates.io, PyPI, and npm — plus standalone
-            CLI binaries and the C ABI libraries. C# ships to NuGet, Java to Maven
-            Central, the in-repo Go module is tagged `bindings/go/${{ steps.tag.outputs.tag }}`,
-            and R ships to r-universe via their own release jobs.
-
-            ### Auto-generated changelog
-
-            See below; GitHub computes it from the commits since the previous tag.
-
+          body_path: release-notes.md
   # --------------------------------------------------------------------------
   # Build provenance attestations
   # --------------------------------------------------------------------------
   attestations:
     name: Attest build provenance
     timeout-minutes: 45
-    needs: [cargo-publish, python-wheels, python-sdist, github-release]
+    needs: [cargo-publish, python-wheels, python-sdist, github-release,
+            csharp-publish, java-publish, c-abi-build]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -908,6 +1025,26 @@ jobs:
           pattern: wheels-*
           path: artifacts/python
           merge-multiple: true
+      # Provenance covered the crates and the Python artefacts only, so the
+      # NuGet package, the Maven JAR and the six C ABI libraries shipped with
+      # nothing a consumer could verify them against -- and those are precisely
+      # the artefacts that are native binaries rather than source.
+      - name: Download the NuGet package
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: nuget-package
+          path: artifacts/nuget
+      - name: Download the Maven artefacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: java-artifacts
+          path: artifacts/java
+      - name: Download the C ABI libraries
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: c-abi-*
+          path: artifacts/c-abi
+          merge-multiple: true
       - name: Attest build provenance
         id: attest
         uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
@@ -916,6 +1053,9 @@ jobs:
             artifacts/crates/*.crate
             artifacts/python/*.whl
             artifacts/python/*.tar.gz
+            artifacts/nuget/*.nupkg
+            artifacts/java/*.jar
+            artifacts/c-abi/*.tar.gz
       - name: Attach provenance bundle to the GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
