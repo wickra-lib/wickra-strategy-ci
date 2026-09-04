@@ -14,8 +14,8 @@ Thanks for using `wickra-strategy-ci`. Here is where to go for help.
 
 Open a [GitHub issue](https://github.com/wickra-lib/wickra-strategy-ci/issues) using
 the bug-report or feature-request template. Please include the version, the
-binding/language you used, a minimal `ScanSpec` and a small sample universe, and
-the expected vs actual report.
+binding/language you used, a minimal `StrategyTest` and a small sample dataset,
+and the expected vs actual report.
 
 ## Security
 

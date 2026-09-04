@@ -43,9 +43,9 @@ produce a byte-identical result either way.
   do not push to `main` directly.
 - **All public artifacts are in English** — code, comments, commit messages, PR
   titles and bodies, issues and docs.
-- **No secrets, ever** — not in code, tests, fixtures, logs, issues or PRs. Any
-  live-universe path is opt-in behind the `live` feature and never uses real
-  keys in tests.
+- **No secrets, ever** — not in code, tests, fixtures, logs, issues or PRs. The
+  runner reads recorded data and opens no network connections, so a test needs
+  no credentials.
 - **Production code only** — no mocks outside `#[cfg(test)]`, no TODO stubs, and
   no defensive branches that can never run (they fail coverage).
 

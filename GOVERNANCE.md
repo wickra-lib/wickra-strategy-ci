@@ -13,9 +13,10 @@ governance model.
 ## Decision making
 
 Day-to-day changes are merged by a maintainer once CI is green and the change
-has been reviewed. Larger or breaking changes (the `ScanSpec` / condition schema,
-the JSON command boundary, or the public API) are discussed in an issue first and
-decided by maintainer consensus; the lead maintainer breaks ties.
+has been reviewed. Larger or breaking changes (the `StrategyTest` / tolerance /
+property schema, the JSON command boundary, or the public API) are discussed in
+an issue first and decided by maintainer consensus; the lead maintainer breaks
+ties.
 
 ## Releases
 

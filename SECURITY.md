@@ -1,22 +1,25 @@
 # Security Policy
 
-`wickra-strategy-ci` is analysis software: it evaluates data-driven conditions over
-market data and places no orders. It holds no order-secret material and opens no
-authenticated connections on its default path (the optional `live` universe
-feature only reads public data). The attack surface is therefore narrow —
-principally the parsing of untrusted `ScanSpec` / universe data as it crosses the
-C ABI and WASM boundary. See [THREAT_MODEL.md](THREAT_MODEL.md) for the asset
-inventory and trust boundaries.
+`wickra-strategy-ci` is test tooling: it replays recorded market data through the
+`wickra-backtest` engine and compares the resulting report to a pinned one. It
+places no orders, holds no credentials, and opens no network connections. The
+attack surface is therefore narrow — principally the parsing of untrusted test
+JSON, `StrategySpec` sub-JSON and OHLCV data as it crosses the C ABI and WASM
+boundary, and the fact that the tool is typically run inside CI on
+attacker-influenced pull-request content. See
+[THREAT_MODEL.md](THREAT_MODEL.md) for the asset inventory and trust
+boundaries.
 
 ## Supported versions
 
-This project is pre-release. Security fixes target the `main` branch and the most
-recent published version once a release exists.
+This project is pre-release: no version has shipped to a registry yet. Security
+fixes target the `main` branch, and will target the most recent published version
+once `0.1.0` is released.
 
 | Version | Supported |
 |---------|-----------|
-| `main`  | ✅        |
-| `0.1.x` (upcoming) | ✅ |
+| `main` | ✅ |
+| `0.1.0` (unreleased) | ✅ |
 
 ## Reporting a vulnerability
 
@@ -35,11 +38,12 @@ reporters who wish to be named once a fix ships.
 ## Scope
 
 In scope: memory-safety or panic-across-FFI flaws in the C ABI hub and its
-buffer protocol, denial-of-service through a hostile `ScanSpec` or dataset (for
-example unbounded allocation while parsing), and any input that makes a binding
-return a corrupted or non-deterministic report. Out of scope: incorrect indicator
-mathematics (a functional bug, not a vulnerability) and advisories in third-party
-crates that are already tracked and triaged.
+buffer protocol, denial-of-service through a hostile `StrategyTest`, dataset or
+`StrategySpec` (for example unbounded allocation while parsing), and any input
+that makes a binding return a corrupted or non-deterministic report. Out of
+scope: incorrect backtest mathematics (a functional bug in the engine, not a
+vulnerability here) and advisories in third-party crates that are already tracked
+and triaged.
 
 ## Vulnerability disclosure (VEX)
 

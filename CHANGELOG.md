@@ -6,7 +6,43 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Governance and community docs described a different product.** `SECURITY.md`,
+  `SUPPORT.md`, `GOVERNANCE.md`, `CONTRIBUTING.md`, the bug-report issue template
+  and the pull-request template referred to a `ScanSpec`, a sample "universe" and
+  an optional `live` feature — none of which exist in this repository. They now
+  describe the `StrategyTest` model, recorded datasets, and the actual `parallel`
+  and `proof` features.
+- **`deny.toml` carried a dead licence exception.** The `CDLA-Permissive-2.0`
+  allowance for `webpki-roots` was justified by a TLS stack that this crate never
+  pulls in; `webpki-roots` is not in `Cargo.lock`. The exception list is now
+  empty.
+- `README.md` and `ARCHITECTURE.md` advertised four tolerance kinds ("exact,
+  absolute, relative, or ULP"). The runner implements `abs` and `rel`, falling
+  back to exact equality when a field names no tolerance; there is no ULP mode.
+- `README.md` listed invariant properties that do not exist (`equity never
+  negative`); it now names the seven that do.
+- `CHANGELOG.md` credited the composite action with a `@v1` moving major tag; no
+  tag has been published yet.
+- `SECURITY.md` stated that security fixes target "the most recent published
+  version" as though one existed.
+
 ### Added
+
+- `LICENSES/MIT.txt` and `LICENSES/Apache-2.0.txt` — the SPDX licence texts at
+  their conventional paths, alongside the existing `LICENSE-MIT` /
+  `LICENSE-APACHE`.
+- `docs/README.md` — an index of the documentation kept beside the code, and a
+  signpost to what deliberately lives elsewhere (`docs.wickra.org`, and the
+  `StrategySpec` schema in `wickra-backtest`).
+- `README.md` gained the sections the repository blueprint requires:
+  `Benchmarks`, `Requirements`, `Project layout`, `Building everything from
+  source`, `Testing` and `Ecosystem`, plus a runnable quickstart directly under
+  the badges and a worked `StrategyTest` example.
+- `README.md` and `ARCHITECTURE.md` now state that the golden diff compares
+  numeric leaves only — strings, booleans and nulls are not pinned.
+
 
 - **`strategy-ci-core`** — the data-driven test runner: a serde `StrategyTest`
   model carrying an opaque `wickra-backtest` `StrategySpec`, golden-diff with
@@ -22,7 +58,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   C#, Go, Java and R over a C ABI hub — byte-identical results across all.
 - **Composite GitHub Action** (`action.yml`) that installs the released CLI and
   runs a strategy-test directory, failing the workflow on any failing test, with
-  a `@v1` moving major tag and a dogfooding self-test.
+  a dogfooding self-test. It builds the CLI from git until the first release
+  ships a binary asset.
 - **Golden corpus** (`golden/`) run by every binding for cross-language
   byte-identity, four integration test suites, four cargo-fuzz targets, and a
   criterion benchmark.
