@@ -1,19 +1,20 @@
 ---
 name: Feature request
-about: Suggest a condition kind, a metric or a binding capability
+about: Suggest a tolerance kind, a property, a perturbation or a binding capability
 title: "[feature] "
 labels: enhancement
 ---
 
 **What problem does this solve?**
-The screen you can't express today.
+The regression you cannot catch today, or the assertion you cannot express.
 
 **Proposed solution**
-What you'd like to see — a new comparator, a cross-section or breadth metric, a
-command on the data-driven API, or a binding surface.
+What you would like to see — a new tolerance kind, an invariant property, a fuzz
+perturbation, a command on the data-driven API, an output format, or a binding
+surface.
 
 **Alternatives considered**
-Other ways you've tried to achieve this.
+Other ways you have tried to achieve this with the current model.
 
 **Additional context**
-Links, references or prior art (e.g. a tool that does this).
+Links, references or prior art (e.g. a snapshot-testing tool that does this).

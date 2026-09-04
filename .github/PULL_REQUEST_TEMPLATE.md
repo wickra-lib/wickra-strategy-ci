@@ -1,4 +1,11 @@
-<!-- Keep it short. One logical change per PR. -->
+<!--
+Keep it short. One logical change per PR.
+
+For a change that touches the wire format, the binding surface, or the numbers a
+golden pins, use the long-form template instead by appending `?template=detailed.md`
+to the compare URL. It walks through wire-format impact, binding parity and
+determinism.
+-->
 
 ## What
 
