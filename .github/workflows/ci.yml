@@ -462,7 +462,8 @@ jobs:
           export WKSTRATEGYCI_INC="${WKSTRATEGYCI_INC//\\//}"
           export WKSTRATEGYCI_LIB="${WKSTRATEGYCI_LIB//\\//}"
           if command -v cygpath >/dev/null 2>&1; then
-            export PATH="$(cygpath -u "$WKSTRATEGYCI_LIB"):$PATH"
+            lib_unix=$(cygpath -u "$WKSTRATEGYCI_LIB")
+            export PATH="${lib_unix}:$PATH"
           else
             export LD_LIBRARY_PATH="$WKSTRATEGYCI_LIB:$LD_LIBRARY_PATH"
             export DYLD_LIBRARY_PATH="$WKSTRATEGYCI_LIB:$DYLD_LIBRARY_PATH"

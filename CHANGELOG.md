@@ -24,6 +24,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   leaving the job token in the runner's git config for the rest of the job. The
   one remaining checkout that keeps credentials is `major-tag`, which pushes a
   tag and needs them.
+- **Eight shell defects actionlint found on its first run**, in code that had
+  been shipping. Three publish steps used `A && B || C`, which reads as
+  if-then-else and is not: the fallback also runs when the publish succeeds and
+  the `echo` after it fails, so a successful publish could have been reported as
+  "already published" — or worse, a real failure swallowed. All three are now
+  spelled as `if`/`elif`/`else`. Two `local x=$(...)` assignments masked the
+  command's exit status behind `local`'s own (SC2155), and the release-asset
+  count parsed `ls` output (SC2012).
 - Pin comments on `Swatinem/rust-cache` and `lycheeverse/lychee-action` read
   `# v2`, too coarse for Dependabot to act on. Both now name the patch version,
   and rust-cache moves to the same v2.9.2 the rest of the organisation pins.
