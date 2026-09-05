@@ -8,6 +8,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **The WASM npm package would have published without its licence texts.**
+  `wickra-strategy-ci-wasm` declares `MIT OR Apache-2.0` and its generated
+  manifest listed only the three build outputs; the release staged no copies for
+  it. The other seven npm packages were fixed by naming the texts in a manifest
+  under review, which is not possible here because wasm-pack generates this one —
+  so the release now stages the copies, adds them to the generated `files`, and
+  proves with `npm pack --dry-run` that they are in the tarball before
+  publishing. wasm-pack had been saying so on every build: "License key is set in
+  Cargo.toml but no LICENSE file(s) were found".
+
+
 - **`Cargo.lock` did not match the manifests, so `cargo build --locked` failed.**
   When the benchmark crate moved to `codspeed-criterion-compat`, the lockfile was
   not regenerated with it: `codspeed`, `codspeed-criterion-compat` and their
