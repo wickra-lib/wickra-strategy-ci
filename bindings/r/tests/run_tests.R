@@ -1,6 +1,15 @@
 ## Plain-R tests for the wickra-strategy-ci R binding (no testthat dependency).
 ## Mirrors the Rust/Python/Node/Go/C#/Java tests and doubles as the completeness
 ## guard: it exercises the full public surface (version + new + command).
+##
+## Everything here is self-contained: the candles and the test JSON are built in
+## this file. That is a requirement, not a style choice -- R CMD check runs the
+## shipped tests inside an unpacked tarball, where no repository lies above the
+## package, so a test that reached for golden/ would either skip silently on
+## every real check run or, worse, bind to an unrelated directory that happened
+## to be named that on the build machine. The cross-language golden comparison
+## lives in golden_cross_language.R, which is .Rbuildignore'd and run from CI
+## against the repository checkout.
 
 library(wickrastrategyci)
 
@@ -63,62 +72,5 @@ stopifnot(grepl('"diff":[]', rerun, fixed = TRUE))
 ## an unknown command is an in-band error, not a hard error
 inband <- wkstrategyci_command(session, '{"cmd":"nope"}')
 stopifnot(grepl('"ok":false', inband, fixed = TRUE))
-
-## cross-language golden: build the run_suite command from the committed
-## golden/{tests,data} corpus and assert the response equals
-## golden/expected/suite.json byte-for-byte — the exact SuiteResult the Rust
-## core and every other binding produce. The corpus lives at the repo root;
-## walk up from the working directory to find it, skipping cleanly if absent.
-golden_dir <- function() {
-  d <- normalizePath(getwd(), mustWork = FALSE)
-  for (i in seq_len(10)) {
-    g <- file.path(d, "golden")
-    if (dir.exists(file.path(g, "tests"))) {
-      return(g)
-    }
-    d <- dirname(d)
-  }
-  NULL
-}
-
-load_golden_data <- function(g) {
-  parts <- character(0)
-  for (csv in sort(list.files(file.path(g, "data"), pattern = "\\.csv$", full.names = TRUE))) {
-    rows <- character(0)
-    lines <- readLines(csv, warn = FALSE)
-    for (idx in seq_along(lines)) {
-      line <- trimws(lines[idx])
-      if (!nzchar(line)) next
-      cols <- trimws(strsplit(line, ",")[[1]])
-      t <- suppressWarnings(as.integer(cols[1]))
-      if (is.na(t)) next
-      rows <- c(rows, paste0(
-        '{"time":', cols[1], ',"open":', cols[2], ',"high":', cols[3],
-        ',"low":', cols[4], ',"close":', cols[5], ',"volume":', cols[6], '}'
-      ))
-    }
-    name <- sub("\\.csv$", "", basename(csv))
-    parts <- c(parts, paste0('"', name, '":[', paste(rows, collapse = ","), "]"))
-  }
-  paste0("{", paste(parts, collapse = ","), "}")
-}
-
-g <- golden_dir()
-if (!is.null(g)) {
-  tests <- vapply(
-    sort(list.files(file.path(g, "tests"), pattern = "\\.json$", full.names = TRUE)),
-    function(p) trimws(paste(readLines(p, warn = FALSE), collapse = "\n")),
-    character(1)
-  )
-  suite_cmd <- paste0(
-    '{"cmd":"run_suite","tests":[', paste(tests, collapse = ","),
-    '],"data":', load_golden_data(g), "}"
-  )
-  got <- wkstrategyci_command(session, suite_cmd)
-  want <- trimws(paste(
-    readLines(file.path(g, "expected", "suite.json"), warn = FALSE), collapse = "\n"
-  ))
-  stopifnot(identical(trimws(got), want))
-}
 
 cat("wickra-strategy-ci R tests passed\n")

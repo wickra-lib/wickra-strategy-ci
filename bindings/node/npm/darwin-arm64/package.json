@@ -4,7 +4,9 @@
   "description": "Native binding for wickra-strategy-ci (macOS arm64). Installed automatically as an optional dependency of wickra-strategy-ci on matching platforms.",
   "main": "wickra-strategy-ci.darwin-arm64.node",
   "files": [
-    "wickra-strategy-ci.darwin-arm64.node"
+    "wickra-strategy-ci.darwin-arm64.node",
+    "LICENSE-MIT",
+    "LICENSE-APACHE"
   ],
   "license": "MIT OR Apache-2.0",
   "engines": {
