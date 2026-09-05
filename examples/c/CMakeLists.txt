@@ -34,12 +34,23 @@ add_executable(runpp run.cpp)
 target_include_directories(runpp PRIVATE "${WICKRA_STRATEGY_CI_INCLUDE}")
 target_link_libraries(runpp PRIVATE "${WICKRA_STRATEGY_CI_LIB}")
 
+# The cross-language golden, driven through a real C compiler. Every other
+# binding runs golden/ through its own client; without this the hub that the
+# C++, C#, Go, Java and R bindings all call through was only ever exercised from
+# Rust. The corpus path is compiled in, so the test does not guess where the
+# repository root is.
+add_executable(golden golden_test.c)
+target_include_directories(golden PRIVATE "${WICKRA_STRATEGY_CI_INCLUDE}")
+target_link_libraries(golden PRIVATE "${WICKRA_STRATEGY_CI_LIB}")
+target_compile_definitions(golden PRIVATE
+    WKSTRATEGYCI_GOLDEN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../../golden")
+
 # On Windows the runtime DLL must sit next to the executable (there is no rpath);
 # without it the loader pops a modal "DLL not found" dialog that hangs ctest. Copy
 # it next to each example after build. (Unix resolves the .so/.dylib via the
 # linker's embedded path, so this is Windows-only.)
 if(WIN32)
-    foreach(example run runpp)
+    foreach(example run runpp golden)
         add_custom_command(TARGET ${example} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 "${WICKRA_STRATEGY_CI_LIB_DIR}/wickra_strategy_ci.dll"
@@ -51,5 +62,6 @@ endif()
 enable_testing()
 add_test(NAME run COMMAND run)
 add_test(NAME runpp COMMAND runpp)
+add_test(NAME golden COMMAND golden)
 # A missing runtime dependency must fail fast, never block the runner for hours.
-set_tests_properties(run runpp PROPERTIES TIMEOUT 60)
+set_tests_properties(run runpp golden PROPERTIES TIMEOUT 60)

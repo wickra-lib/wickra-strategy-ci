@@ -197,6 +197,181 @@ jobs:
         run: cargo +nightly fuzz run --target x86_64-unknown-linux-gnu run_test -- -max_total_time=30
         working-directory: fuzz
 
+  # Each binding is written separately and each has its own suite, so a method
+  # that goes missing in one of them fails nowhere -- its tests simply stop
+  # exercising it. Nothing compared the bindings to each other, or compared the
+  # release version's dozen declarations, until these ran.
+  # The Linux wheels are built inside manylinux / musllinux containers, and the
+  # ordinary python job builds on the runner instead -- so a dependency that
+  # needs a system library the minimal container lacks compiles here and fails
+  # only during the release, after the tag. This builds the wheel the way the
+  # release does, in both containers, so that gap is not blind.
+  #
+  # No vendored TLS and no perl here, unlike the indicator library: the binding
+  # depends on strategy-ci-core alone, which does JSON and arithmetic and opens
+  # no sockets. That is a claim worth testing rather than asserting, which is
+  # what this job does.
+  python-wheel-container-smoke:
+    name: Python wheel (${{ matrix.manylinux }} smoke)
+    timeout-minutes: 30 # backstop against a hung job, not a budget
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        manylinux: [auto, musllinux_1_2]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Sync root README into bindings/python so the build matches release
+        run: cp README.md bindings/python/README.md
+
+      - uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
+        with:
+          working-directory: bindings/python
+          target: x86_64
+          # Keep in sync with release.yml.
+          args: --release --strip --out dist
+          manylinux: ${{ matrix.manylinux }}
+
+  binding-surface:
+    name: Binding surface parity
+    timeout-minutes: 10 # backstop against a hung job, not a budget
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Compare every binding's surface with the C ABI
+        run: python3 scripts/check_binding_surface.py
+
+      # A bump that misses one declaration ships a package pinning a native
+      # binary that was never published, and that surfaces on a user's machine
+      # after the tag, which is irreversible.
+      - name: Every version declaration agrees
+        run: python3 scripts/check_version_sync.py
+
+      # Each bindings/*/README.md is, or is a workflow line away from being, a
+      # published package's long description. A link that leaves the package is
+      # dead on the registry page while resolving fine on GitHub, so nothing
+      # says so.
+      - name: Binding READMEs link only to what travels with them
+        run: python3 scripts/check_readme_links.py
+
+      # An SPDX expression in a manifest is a reference to two documents, not
+      # the documents. cargo decides what to package from git, so the copies
+      # have to be committed -- and committed copies drift.
+      - name: Every published package carries its licence texts
+        run: python3 scripts/check_license_copies.py
+
+      # R is the one binding whose native half comes from a published release
+      # rather than from this tree, so the pairing r-universe compiles is one
+      # our own R job never sees: it builds against the header in the tree.
+      - name: Check the R wrapper against the released C ABI
+        run: python3 scripts/check_r_abi_skew.py
+
+  # The published API is a promise. Nothing checked that a patch release keeps
+  # it, and the surface is what ten bindings sit on top of -- exactly the shape
+  # where a rename slips through review and out to six registries in one
+  # irreversible run. The baseline is whatever is already on crates.io; before
+  # the first release there is none, which the tool reports and skips.
+  semver:
+    name: Public API (cargo-semver-checks)
+    timeout-minutes: 30 # backstop: it builds rustdoc JSON per crate and baseline
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2.85.1
+        with:
+          tool: cargo-semver-checks
+      - name: Check the public API against the published baseline
+        run: cargo semver-checks --package strategy-ci-core --package wickra-strategy-ci
+
+  # External link rot is non-deterministic -- third-party sites go down, rate
+  # limit, or move -- so this reports without blocking. The authoritative run is
+  # the weekly links.yml; this one catches a link broken by the pull request
+  # itself, at the moment it can still be fixed cheaply.
+  links:
+    name: External links (non-blocking)
+    timeout-minutes: 10 # backstop against a hung job, not a budget
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          args: --config lychee.toml --no-progress --root-dir "${{ github.workspace }}" "*.md" "docs/*.md" "bindings/*/README.md"
+          fail: true
+
+  # examples/ carried nine runnable programs and CI ran none of them. An example
+  # that stopped compiling would have gone unnoticed until a reader tried it,
+  # which is the worst place to find out. The C, C#, Go, Java and R examples link
+  # the C ABI, so they are built here against a freshly compiled library; the
+  # Node and Python examples need a built binding and run in their own jobs.
+  examples-smoke:
+    name: Examples build
+    timeout-minutes: 30 # backstop against a hung job, not a budget
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+
+      - name: Build the C ABI library
+        run: cargo build -p wickra-strategy-ci-c --release
+
+      - name: Rust example
+        run: cargo build -p wickra-strategy-ci-example
+
+      # CMake builds run.c and run.cpp, and ctest runs both. run.cpp is what
+      # keeps the header-only C++ hull compiling: nothing else includes it.
+      - name: C and C++ examples
+        run: |
+          cmake -S examples/c -B examples/c/build
+          cmake --build examples/c/build --config Release
+          ctest --test-dir examples/c/build -C Release --output-on-failure
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "stable"
+          cache: false
+      - name: Go example
+        working-directory: examples/go
+        env:
+          CGO_LDFLAGS: -L${{ github.workspace }}/target/release
+          LD_LIBRARY_PATH: ${{ github.workspace }}/target/release
+        run: go build ./...
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: "8.0.x"
+      - name: C# example
+        run: dotnet build examples/csharp/Run/Run.csproj -c Release
+
+      - uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          distribution: temurin
+          java-version: "25"
+      - name: Java example
+        run: javac -d examples/java/out -cp bindings/java/src/main/java examples/java/Run.java
+
+      - uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2.12.1
+        with:
+          r-version: "release"
+          use-public-rspm: true
+      - name: R example parses
+        run: Rscript -e 'invisible(parse("examples/r/run.R")); cat("examples/r/run.R parses\n")'
+
   python:
     name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
     timeout-minutes: 30 # backstop against a hung job, not a budget
