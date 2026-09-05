@@ -8,6 +8,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- The `semver` and `examples-smoke` jobs pinned `Swatinem/rust-cache` with a bare
+  `# v2` comment, too coarse for Dependabot to act on; both now name v2.9.2, the
+  version the rest of the organisation pins.
+- `scripts/update-lockfiles.sh` pinned uv 0.12.7; it now pins 0.12.10, with the
+  checksums taken from the release's own `.sha256` files and confirmed by
+  downloading and hashing the archive rather than copied on trust.
+- The one checkout that keeps its credentials -- `major-tag`, which pushes a tag
+  and cannot work without them -- now says so where a reader meets it.
+- The README's Requirements table gained R's lower bound, which `DESCRIPTION`
+  declares but the table did not repeat.
+
+
 <<<<<<< HEAD
 <<<<<<< HEAD
 - **JSON float parsing was not bit-exact, in a project whose claim is

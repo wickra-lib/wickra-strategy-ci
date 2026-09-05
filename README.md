@@ -173,6 +173,7 @@ multiplies a test's cost by its `runs`. Full method and caveats in
 | Node.js | 22 or newer. |
 | Go | 1.23 or newer. |
 | Java | 22 or newer. |
+| R | 3.5 or newer. |
 | C / C++ / C# / R | The C ABI library plus its vendored header; see each binding's `README.md`. |
 
 Building from source additionally needs a Rust toolchain; the polyglot bindings

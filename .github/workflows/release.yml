@@ -1117,6 +1117,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          # The only checkout in this repository that keeps the token in the
+          # runner's git config, because the step below pushes a tag with it.
+          # Everywhere else it is dropped.
           persist-credentials: true
       - name: Force-update the major tag to the release commit
         shell: bash
