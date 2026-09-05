@@ -8,6 +8,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+<<<<<<< HEAD
+<<<<<<< HEAD
 - **JSON float parsing was not bit-exact, in a project whose claim is
   byte-identical results.** `serde_json`'s default float parser is fast but can
   land one ULP from the value the text names, so `parse(serialize(x)) != x` for
@@ -23,6 +25,54 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   CVSS 7.5), reachable as a transitive development dependency of
   `@napi-rs/cli`. Found by the osv-scanner job the moment it was wired up;
   `bindings/node/package-lock.json` now resolves 4.3.2.
+=======
+>>>>>>> 1113e5e (fix: complete the binding inventory and stop the R test reaching outside its package)
+=======
+- **Every packaged binding README linked its licence relatively.** `../../LICENSE-MIT`
+  resolves on GitHub and nowhere else: on PyPI, npm and pkg.go.dev the link is
+  simply dead, and nothing said so because the file it points at does exist in
+  the repository. Found by the new `check_readme_links.py`, which now guards it.
+
+### Added
+
+- **Five verification scripts, and the CI job that runs them.** Each covers a
+  failure that is invisible from a build:
+  - `check_binding_surface.py` — reads the C ABI header as the source of truth
+    and holds all eight bindings to it. Nothing compared the bindings *to each
+    other*, so a method going missing in one of them failed nowhere: its own
+    tests simply stopped exercising it.
+  - `check_version_sync.py` — the version lives in twelve declarations across
+    six package managers; a bump that misses one ships a package pinning a
+    native binary that was never published, which surfaces on a user's machine
+    after the tag.
+  - `check_license_copies.py` — cargo packages from git, so a licence copy that
+    is untracked is missing from the `.crate` without a word.
+  - `check_readme_links.py` — see above.
+  - `check_r_abi_skew.py` — R is the one binding whose native half comes from a
+    published release rather than this tree, so the pairing r-universe compiles
+    is one our own R job never sees.
+- **`examples-smoke`** — `examples/` carried nine runnable programs and CI ran
+  none of them. An example that stopped compiling would have been found by a
+  reader, which is the worst place to find out.
+- **`semver`** — nothing checked that a patch release keeps the public API,
+  across a surface ten bindings sit on top of.
+- **`python-wheel-container-smoke`** — the Linux wheels are built inside
+  manylinux and musllinux containers while the ordinary job builds on the
+  runner, so a dependency needing a system library the container lacks would
+  have failed during the release, after the tag.
+- **`links`** in CI, non-blocking, alongside the authoritative weekly run: it
+  catches a link the pull request itself broke, while that is still cheap.
+- **A golden test for the C binding** (`examples/c/golden_test.c`). Every other
+  binding ran the golden corpus through its own client; C did not, leaving the
+  hub that the C++, C#, Go, Java and R bindings all call through exercised only
+  from Rust. It compiles against the shipped header with a real C compiler and
+  asserts the suite byte for byte.
+- `scripts/update-lockfiles.sh` — the lockfiles had no regeneration script. uv is
+  fetched only on request (`WKSTRATEGYCI_BOOTSTRAP_UV=1`) and its release is
+  checksum-verified, rather than piping an installer into a shell.
+
+
+>>>>>>> 1570892 (ci: add the five verification scripts and the jobs that run them)
 - **The shipped R test reached outside the package.** `tests/run_tests.R` walked
   up to ten directories looking for `golden/`. `R CMD check` runs the shipped
   tests inside an unpacked tarball, where no repository lies above the package,
@@ -45,6 +95,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   declare `glibc`.
 - `bindings/r/DESCRIPTION` declared no lower bound on R.
 
+<<<<<<< HEAD
 - **`wickra-data` was declared and used by nothing.** It sat in
   `[workspace.dependencies]` pinned at `0.9` while the published crate is at
   `1.0.4`, so it was simultaneously dead weight and stale. No crate imported it:
@@ -118,6 +169,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   are native binaries rather than source. The Maven JAR also never reached the
   GitHub Release at all.
 
+=======
+>>>>>>> 1113e5e (fix: complete the binding inventory and stop the R test reaching outside its package)
 ### Added
 
 - **`bindings/r/configure` and `configure.win`.** The R binding had neither, so
@@ -137,6 +190,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the `.csproj` is packaged into the `.nupkg` and is a different document.
 - `examples/wasm/run.mjs` — WASM was the only binding without a runnable example.
 
+<<<<<<< HEAD
 ### Changed
 
 - The release notes move to `.github/release-notes.md`, rendered with `envsubst`
@@ -144,6 +198,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   was indistinguishable from a real unpinned step to anything auditing for them.
 
 
+=======
+>>>>>>> 1113e5e (fix: complete the binding inventory and stop the R test reaching outside its package)
 
 - **Governance and community docs described a different product.** `SECURITY.md`,
   `SUPPORT.md`, `GOVERNANCE.md`, `CONTRIBUTING.md`, the bug-report issue template
