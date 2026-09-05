@@ -1148,19 +1148,27 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          # The only checkout in this repository that keeps the token in the
-          # runner's git config, because the step below pushes a tag with it.
-          # Everywhere else it is dropped.
-          persist-credentials: true
-      - name: Force-update the major tag to the release commit
+      # Moving a ref needs no working tree and no git credentials: the API does
+      # it directly. This was the one checkout in the repository that kept the
+      # token in the runner's git config for the whole job, and it kept it only
+      # to run a single `git push`.
+      - name: Move the major tag to the release commit
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
           major="v${GITHUB_REF_NAME#v}"; major="${major%%.*}"   # v1.2.3 -> v1
-          git config user.name "wickra-bot"
-          git config user.email "support@wickra.org"
-          git tag -f "$major" "$GITHUB_SHA"
-          git push origin -f "refs/tags/$major"
-          echo "::notice::moved $major to $GITHUB_SHA"
+          ref="tags/${major}"
+
+          # PATCH moves an existing ref; the first release of a major has none
+          # yet, so a 404 there means create it rather than fail.
+          if gh api "repos/${GITHUB_REPOSITORY}/git/refs/${ref}" --silent 2>/dev/null; then
+            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/git/refs/${ref}" \
+              -f sha="${GITHUB_SHA}" -F force=true --silent
+            echo "::notice::moved ${major} to ${GITHUB_SHA}"
+          else
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+              -f ref="refs/${ref}" -f sha="${GITHUB_SHA}" --silent
+            echo "::notice::created ${major} at ${GITHUB_SHA}"
+          fi

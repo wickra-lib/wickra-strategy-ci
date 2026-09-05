@@ -105,6 +105,7 @@ pub fn run_test(test: &StrategyTest, data: &BTreeMap<String, Vec<Candle>>) -> Re
     Ok(TestResult {
         id: test.id.clone(),
         passed,
+        error: None,
         diff,
         property_results,
         fuzz_failures,
@@ -124,9 +125,25 @@ pub fn bless(test: &StrategyTest, data: &BTreeMap<String, Vec<Candle>>) -> Resul
     Ok(blessed)
 }
 
+/// Run one test, turning a failure to run it into a failing result rather than
+/// an error. A suite reports on every test it was given; a test whose dataset is
+/// missing or whose spec the engine rejects is a failing test, not a reason to
+/// stop looking at the other two hundred.
+fn run_test_reported(test: &StrategyTest, data: &BTreeMap<String, Vec<Candle>>) -> TestResult {
+    match run_test(test, data) {
+        Ok(result) => result,
+        Err(error) => TestResult::errored(test.id.clone(), error.to_string()),
+    }
+}
+
 /// Run a suite of tests, sorted by id. Tests are independent, so with the
 /// `parallel` feature they run concurrently; the sorted output is identical
 /// either way.
+///
+/// A suite never stops early. Every test produces a result, including one that
+/// could not be run — it fails, carries the reason in `error`, and the rest of
+/// the suite is still reported. Returning `Err` from here would mean a single
+/// typo in one `dataset_ref` hides the verdict on everything else.
 pub fn run_suite(
     tests: &[StrategyTest],
     data: &BTreeMap<String, Vec<Candle>>,
@@ -136,14 +153,14 @@ pub fn run_suite(
         use rayon::prelude::*;
         tests
             .par_iter()
-            .map(|test| run_test(test, data))
-            .collect::<Result<Vec<_>>>()?
+            .map(|test| run_test_reported(test, data))
+            .collect()
     };
     #[cfg(not(feature = "parallel"))]
     let mut results: Vec<TestResult> = tests
         .iter()
-        .map(|test| run_test(test, data))
-        .collect::<Result<Vec<_>>>()?;
+        .map(|test| run_test_reported(test, data))
+        .collect();
 
     results.sort_by(|a, b| a.id.cmp(&b.id));
     let passed = results.iter().filter(|r| r.passed).count();
