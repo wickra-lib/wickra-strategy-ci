@@ -74,6 +74,50 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the committed goldens are unaffected. `docs/FUZZING.md` had already promised
   "perturbed but well-formed data".
 
+- **The release pipeline could not have published the CLI.** Five steps referred
+  to a crate `wickra-strategy-ci-cli`; the package is named `wickra-strategy-ci`
+  (only its directory is `crates/strategy-ci-cli`). `cargo publish -p
+  wickra-strategy-ci-cli` answers "package ID specification did not match any
+  packages", so both the `cli-binaries` build and the crates.io publish would
+  have failed on the first tag. The SBOM step also copied from a directory that
+  does not exist, and the README's crates.io badge pointed at a crate that will
+  never exist.
+- **A `workflow_dispatch` from any branch would have published.** `release.yml`
+  accepts a manual start so a failed publish can be retried without moving the
+  tag, and the `release` environment carries no branch policy, so nothing stopped
+  a dispatch from `main` publishing whatever main contained — and tagging the Go
+  mirror `vmain`. The gate now requires `refs/tags/v*`, testing the ref rather
+  than the ref name, since a branch called `v1` would pass a name check.
+- **A failed build stopped one registry, not the release.** Each publish job
+  depended only on the artefacts it consumed, so a broken wheel build stopped
+  PyPI while crates.io, npm and NuGet published anyway — and a version burned on
+  four registries out of seven cannot be rolled back. Every publish now sits
+  behind a gate that opens only once all builds succeed.
+- **The gate reads a still-running CI as an undecided one, not a failed one.**
+  `ci.yml` does not fire on a tag push, so the run that matters is the one from
+  when the commit was on `main`; waiting for a decision keeps a correct tag from
+  being refused for a run that had simply not finished.
+- **`github-release` did not wait for three of its producers.** `csharp-publish`,
+  `java-publish` and `go-mirror` could fail while the release went out reporting
+  success.
+- **The Go mirror was pushed and tagged without ever being built.** A Go tag is
+  immutable on the module proxy, so a mirror that does not compile is permanent.
+  It is now built and vetted exactly as a consumer would, from the module
+  directory with no repository above it. Its `*_test.go` files are also no longer
+  shipped: they read the `golden/` corpus from above the module, so `go test
+  ./...` failed for anyone depending on the mirror.
+- **Maven Central would have rejected the deployment.** The POM declared no
+  `<scm>` ("SCM URL is not defined") and no `<developers>` ("Developers
+  information is missing"), and named a single licence `MIT OR Apache-2.0` with
+  no URL. `mvn -Prelease` matched no profile at all, so Maven only warned and
+  deployed bare: no sources JAR, no javadoc JAR, no signatures, and no publishing
+  plugin to send them with. The profile now exists, with
+  `waitUntil=published` so a green job means published rather than accepted.
+- **Provenance covered the crates and wheels only** — not the NuGet package, the
+  Maven JAR or the six C ABI libraries, which are precisely the artefacts that
+  are native binaries rather than source. The Maven JAR also never reached the
+  GitHub Release at all.
+
 ### Added
 
 - **`bindings/r/configure` and `configure.win`.** The R binding had neither, so
@@ -92,6 +136,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `bindings/csharp/README.md` — the binding-level landing page. The one beside
   the `.csproj` is packaged into the `.nupkg` and is a different document.
 - `examples/wasm/run.mjs` — WASM was the only binding without a runnable example.
+
+### Changed
+
+- The release notes move to `.github/release-notes.md`, rendered with `envsubst`
+  and passed as `body_path`. Inlined in the workflow, their `uses:` usage example
+  was indistinguishable from a real unpinned step to anything auditing for them.
 
 
 

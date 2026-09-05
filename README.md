@@ -8,7 +8,7 @@
 [![CodeQL](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/codeql.svg)](https://github.com/wickra-lib/wickra-strategy-ci/actions/workflows/codeql.yml)
 [![codecov](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/codecov.svg)](https://codecov.io/gh/wickra-lib/wickra-strategy-ci)
 [![GitHub release](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/release.svg)](https://github.com/wickra-lib/wickra-strategy-ci/releases/latest)
-[![crates.io](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/crates.svg)](https://crates.io/crates/wickra-strategy-ci-cli)
+[![crates.io](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/crates.svg)](https://crates.io/crates/wickra-strategy-ci)
 [![PyPI](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/pypi.svg)](https://pypi.org/project/wickra-strategy-ci/)
 [![npm](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/npm.svg)](https://www.npmjs.com/package/wickra-strategy-ci)
 [![NuGet](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/nuget.svg)](https://www.nuget.org/packages/Wickra.StrategyCi)
