@@ -29,6 +29,24 @@ perturbed datasets and the same failures in every language.
 | `dropout` | `p` | Each candle is dropped with probability `p` (at least two are kept). |
 | `gap_shock` | `amount` | `Uniform(-amount, +amount) * close` is added to `close` only (gaps). |
 
+### Candle invariants
+
+Every candle a perturbation produces is **well-formed**: `high` is the maximum
+of the four prices, `low` the minimum, and volume is never negative.
+
+This matters because the price fields move independently. Scaling `high` and
+`low` by separate draws inverts them whenever the jitter exceeds the bar's own
+range — on a bar with a 0.1% range, a 5% jitter does so about 40% of the time —
+and `gap_shock` moves `close` without regard to the range it has to sit inside.
+The engine does not validate its input, so such a bar would be accepted in
+silence, and a property failing on it would say nothing about the strategy.
+
+The ordering is repaired rather than the draw rejected: re-drawing until a bar
+came out valid would quietly bias the distribution toward wide-range bars.
+The prices the PRNG produced are all kept; only which one is called `high` and
+which `low` is re-assigned. Determinism is unaffected — the repair is a pure
+function of the draw, and it is a no-op on any bar that was already valid.
+
 ## What it checks
 
 For each of `runs` re-runs, the perturbation is applied to the dataset and the

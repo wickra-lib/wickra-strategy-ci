@@ -177,6 +177,64 @@ fn fuzz_perturbation_is_deterministic() {
     assert!(dropout.apply(&candles, &mut r).len() >= 2);
 }
 
+/// Every perturbation must yield a bar a market could print. A narrow-range
+/// candle is the case that broke: scaling `high` and `low` independently by
+/// +/-5% puts the high below the low whenever the jitter exceeds the bar's own
+/// range, and the engine accepts such a bar without complaint, so the fuzz axis
+/// was judging strategies against impossible data.
+#[test]
+fn perturbations_keep_candles_well_formed() {
+    use rand::SeedableRng;
+    // Range of 0.1 on a price of 100: any jitter above 0.1% can invert it.
+    let narrow = vec![Candle {
+        time: 0,
+        open: 100.0,
+        high: 100.1,
+        low: 100.0,
+        close: 100.05,
+        volume: 1.0,
+    }];
+    let perturbations = [
+        Perturbation::Jitter { amount: 0.05 },
+        Perturbation::GapShock { amount: 0.05 },
+        Perturbation::Dropout { p: 0.3 },
+    ];
+    for perturbation in perturbations {
+        let mut rng = rand_pcg::Pcg64::seed_from_u64(7);
+        for _ in 0..200 {
+            for c in perturbation.apply(&narrow, &mut rng) {
+                assert!(c.high >= c.low, "high < low: {c:?}");
+                assert!(
+                    c.high >= c.open && c.high >= c.close,
+                    "high not the max: {c:?}"
+                );
+                assert!(
+                    c.low <= c.open && c.low <= c.close,
+                    "low not the min: {c:?}"
+                );
+                assert!(c.volume >= 0.0, "negative volume: {c:?}");
+            }
+        }
+    }
+}
+
+/// Repairing the ordering must not flatten a bar that was already valid: the
+/// prices the RNG drew are kept, only their roles are re-assigned.
+#[test]
+fn well_formed_repair_preserves_the_drawn_prices() {
+    use rand::SeedableRng;
+    let candles = series();
+    let mut rng = rand_pcg::Pcg64::seed_from_u64(3);
+    let out = Perturbation::Jitter { amount: 0.01 }.apply(&candles, &mut rng);
+    assert_eq!(out.len(), candles.len());
+    for (before, after) in candles.iter().zip(&out) {
+        assert_eq!(before.time, after.time);
+        // A 1% jitter on a normal bar leaves every price near its original.
+        assert!((after.high - before.high).abs() < before.high * 0.05);
+        assert!((after.low - before.low).abs() < before.low * 0.05);
+    }
+}
+
 #[test]
 fn run_test_and_bless_and_suite_end_to_end() {
     let data = data();
