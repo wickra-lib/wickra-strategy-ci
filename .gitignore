@@ -40,12 +40,24 @@ obj/
 # Java / Maven build artifacts
 bindings/java/target/
 
-# R build artifacts
+# R build artifacts. configure/configure.win generate most of these: they stage
+# the downloaded C ABI into src/ and write Makevars from Makevars.in. .Rbuildignore
+# already lists them so they stay out of the package tarball; without the same
+# list here, a `git add -A` after an R build commits a downloaded header and a
+# generated import library.
 bindings/r/.rlib/
+bindings/r/..Rcheck/
 bindings/r/src/*.o
 bindings/r/src/*.so
 bindings/r/src/*.dll
-bindings/r/..Rcheck/
+bindings/r/src/*.dll.a
+bindings/r/src/*.dylib
+bindings/r/src/*.def
+bindings/r/src/symbols.rds
+bindings/r/src/wickra_strategy_ci.h
+bindings/r/src/Makevars
+bindings/r/src/wickra-strategy-ci-c.tar.gz
+bindings/r/src/wickra-strategy-ci-c/
 
 # Local secrets — never commit credentials.
 .env
