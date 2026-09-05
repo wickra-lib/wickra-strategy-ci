@@ -1,6 +1,7 @@
 package org.wickra.strategyci;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -75,6 +76,51 @@ class CrossLanguageTest {
 
         try (Session session = new Session()) {
             assertEquals(want, session.command(cmd));
+        }
+    }
+
+    // The batch path against the per-test path. run_suite fans the corpus out
+    // across rayon and sorts the results by id; run_test walks one test at a
+    // time. Those are two different engines reached through the same FFM
+    // boundary, and only the Rust core tested that they agree -- from a binding,
+    // the parallel path crossing the boundary is a separate claim. A regression
+    // here would show up as a suite that passes while an individual run of the
+    // same test does not.
+    //
+    // Compared as text rather than through a JSON model: each golden file is
+    // named after the id it carries, so the sorted file order is the sorted id
+    // order run_suite emits, and the per-test responses concatenated are exactly
+    // the suite's results array.
+    @Test
+    void runSuiteAgreesWithIndividualRuns() throws IOException {
+        Path golden = goldenDir();
+        String data = loadData(golden);
+        var tests = new ArrayList<String>();
+        try (Stream<Path> files = Files.list(golden.resolve("tests"))) {
+            for (Path p : files.filter(x -> x.toString().endsWith(".json")).sorted().toList()) {
+                tests.add(Files.readString(p).trim());
+            }
+        }
+
+        try (Session session = new Session()) {
+            String suite = session.command("{\"cmd\":\"run_suite\",\"tests\":["
+                    + String.join(",", tests) + "],\"data\":" + data + "}");
+
+            int from = suite.indexOf("\"results\":[");
+            assertTrue(from >= 0, "the suite response carries no results array");
+            from += "\"results\":[".length();
+            int to = suite.lastIndexOf("],\"passed\":");
+            assertTrue(to > from, "the suite response carries no passed count");
+            String batch = suite.substring(from, to);
+
+            var individual = new ArrayList<String>();
+            for (String test : tests) {
+                individual.add(session.command(
+                        "{\"cmd\":\"run_test\",\"test\":" + test + ",\"data\":" + data + "}"));
+            }
+
+            assertEquals(String.join(",", individual), batch,
+                    "the batch path must equal the per-test path");
         }
     }
 }

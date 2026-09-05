@@ -6,7 +6,24 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **Every binding now checks that the batch path equals the per-test path.**
+  `run_suite` fans the corpus out across rayon and sorts the results by id;
+  `run_test` walks one test at a time. Those are two different engines reached
+  through the same boundary, and only the Rust core
+  (`tests/suite_eq_seq.rs`) ever tested that they agree — through eight
+  different FFI surfaces, the parallel path is a separate claim each time. A
+  regression would have shown up as a suite that passes while an individual run
+  of the same test does not.
+  The WASM case covers the other half: that build is compiled with
+  `--no-default-features`, so its `run_suite` walks the tests sequentially where
+  every native binding parallelises them. Its test also submits the tests out of
+  order, since a suite that returned them in submission order would pass a
+  same-order comparison.
+
 ### Fixed
+
 
 - **The WASM npm package would have published without its licence texts.**
   `wickra-strategy-ci-wasm` declares `MIT OR Apache-2.0` and its generated

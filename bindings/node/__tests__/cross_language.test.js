@@ -56,3 +56,33 @@ test("run_suite matches the Rust SuiteResult golden byte-for-byte", () => {
   assert.strictEqual(got, want, "SuiteResult must be byte-identical to the Rust golden");
   assert.strictEqual(JSON.parse(got).failed, 0);
 });
+
+// The batch path against the per-test path. `run_suite` fans the corpus out
+// across rayon and sorts the results by id; `run_test` walks one test at a time.
+// Those are two different engines reached through the same FFI boundary, and
+// only the Rust core tested that they agree -- from a binding, the parallel path
+// crossing the boundary is a separate claim. A regression here would show up as
+// a suite that passes while an individual run of the same test does not.
+test("run_suite agrees with running each test on its own", () => {
+  const data = loadData();
+  const tests = fs
+    .readdirSync(path.join(GOLDEN, "tests"))
+    .filter((f) => f.endsWith(".json"))
+    .sort()
+    .map((f) => JSON.parse(fs.readFileSync(path.join(GOLDEN, "tests", f), "utf8")));
+
+  const session = new Session();
+  const batch = JSON.parse(
+    session.command(JSON.stringify({ cmd: "run_suite", tests, data })),
+  ).results;
+
+  const individual = tests
+    .map((t) => JSON.parse(session.command(JSON.stringify({ cmd: "run_test", test: t, data }))))
+    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+
+  assert.strictEqual(
+    JSON.stringify(batch),
+    JSON.stringify(individual),
+    "the batch path must equal the per-test path",
+  );
+});

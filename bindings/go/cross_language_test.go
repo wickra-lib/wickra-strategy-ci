@@ -59,7 +59,8 @@ func loadGoldenData(t *testing.T) map[string][]map[string]float64 {
 	return data
 }
 
-func TestRunSuiteMatchesGolden(t *testing.T) {
+func loadGoldenTests(t *testing.T) []json.RawMessage {
+	t.Helper()
 	testsDir := filepath.Join(goldenDir(), "tests")
 	entries, err := os.ReadDir(testsDir)
 	if err != nil {
@@ -80,6 +81,11 @@ func TestRunSuiteMatchesGolden(t *testing.T) {
 		}
 		tests = append(tests, json.RawMessage(raw))
 	}
+	return tests
+}
+
+func TestRunSuiteMatchesGolden(t *testing.T) {
+	tests := loadGoldenTests(t)
 
 	cmd, err := json.Marshal(map[string]any{
 		"cmd":   "run_suite",
@@ -104,4 +110,75 @@ func TestRunSuiteMatchesGolden(t *testing.T) {
 	if got != want {
 		t.Fatalf("SuiteResult mismatch:\n got: %s\nwant: %s", got, want)
 	}
+}
+
+// The batch path against the per-test path. run_suite fans the corpus out
+// across rayon and sorts the results by id; run_test walks one test at a time.
+// Those are two different engines reached through the same cgo boundary, and
+// only the Rust core tested that they agree -- from a binding, the parallel path
+// crossing the boundary is a separate claim. A regression here would show up as
+// a suite that passes while an individual run of the same test does not.
+func TestRunSuiteAgreesWithIndividualRuns(t *testing.T) {
+	data := loadGoldenData(t)
+	tests := loadGoldenTests(t)
+
+	s := New()
+	defer s.Close()
+
+	suiteCmd, err := json.Marshal(map[string]any{
+		"cmd": "run_suite", "tests": tests, "data": data,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	suiteRaw, err := s.Command(string(suiteCmd))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var suite struct {
+		Results []json.RawMessage `json:"results"`
+	}
+	if err := json.Unmarshal([]byte(suiteRaw), &suite); err != nil {
+		t.Fatal(err)
+	}
+
+	individual := make([]json.RawMessage, 0, len(tests))
+	for _, test := range tests {
+		cmd, err := json.Marshal(map[string]any{
+			"cmd": "run_test", "test": test, "data": data,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		one, err := s.Command(string(cmd))
+		if err != nil {
+			t.Fatal(err)
+		}
+		individual = append(individual, json.RawMessage(one))
+	}
+	// run_suite sorts by id; sort the per-test results the same way.
+	sort.Slice(individual, func(i, j int) bool {
+		return resultID(t, individual[i]) < resultID(t, individual[j])
+	})
+
+	if len(suite.Results) != len(individual) {
+		t.Fatalf("suite has %d results, per-test has %d", len(suite.Results), len(individual))
+	}
+	for i := range suite.Results {
+		if string(suite.Results[i]) != string(individual[i]) {
+			t.Fatalf("result %d differs:\n batch: %s\n  each: %s",
+				i, suite.Results[i], individual[i])
+		}
+	}
+}
+
+func resultID(t *testing.T, raw json.RawMessage) string {
+	t.Helper()
+	var r struct {
+		ID string `json:"id"`
+	}
+	if err := json.Unmarshal(raw, &r); err != nil {
+		t.Fatal(err)
+	}
+	return r.ID
 }

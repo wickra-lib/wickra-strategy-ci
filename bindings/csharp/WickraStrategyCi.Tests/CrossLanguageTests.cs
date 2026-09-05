@@ -72,4 +72,43 @@ public class CrossLanguageTests
 
         Assert.Equal(want, got);
     }
+
+    // The batch path against the per-test path. run_suite fans the corpus out
+    // across rayon and sorts the results by id; run_test walks one test at a
+    // time. Those are two different engines reached through the same P/Invoke
+    // boundary, and only the Rust core tested that they agree -- from a binding,
+    // the parallel path crossing the boundary is a separate claim. A regression
+    // here would show up as a suite that passes while an individual run of the
+    // same test does not.
+    [Fact]
+    public void RunSuite_AgreesWithIndividualRuns()
+    {
+        string golden = GoldenDir();
+        var data = LoadData(golden);
+        var tests = Directory
+            .EnumerateFiles(Path.Combine(golden, "tests"), "*.json")
+            .OrderBy(p => p)
+            .Select(p => JsonSerializer.Deserialize<JsonElement>(File.ReadAllText(p)))
+            .ToList();
+
+        using var session = new Session();
+
+        string suiteRaw = session.Command(
+            JsonSerializer.Serialize(new { cmd = "run_suite", tests, data }));
+        var batch = JsonSerializer.Deserialize<JsonElement>(suiteRaw)
+            .GetProperty("results")
+            .EnumerateArray()
+            .Select(r => r.GetRawText())
+            .ToList();
+
+        var individual = tests
+            .Select(t => session.Command(
+                JsonSerializer.Serialize(new { cmd = "run_test", test = t, data })))
+            .Select(r => JsonSerializer.Deserialize<JsonElement>(r))
+            .OrderBy(r => r.GetProperty("id").GetString(), StringComparer.Ordinal)
+            .Select(r => r.GetRawText())
+            .ToList();
+
+        Assert.Equal(batch, individual);
+    }
 }
