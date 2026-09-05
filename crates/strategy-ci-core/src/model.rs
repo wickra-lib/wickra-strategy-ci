@@ -181,6 +181,14 @@ pub struct FuzzFailure {
 pub struct TestResult {
     pub id: String,
     pub passed: bool,
+    /// Why this test could not be run at all: a missing dataset, a spec the
+    /// engine rejected. Distinct from a test that ran and failed, which reports
+    /// through `diff`, `property_results` or `fuzz_failures`.
+    ///
+    /// Skipped when absent, so a result for a test that ran serialises exactly
+    /// as it did before this field existed -- the goldens are unchanged.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
     /// Empty when there is no golden or the match is perfect.
     pub diff: Vec<FieldDiff>,
     pub property_results: Vec<PropertyResult>,
@@ -208,5 +216,20 @@ impl TestResult {
         fuzz: &[FuzzFailure],
     ) -> bool {
         diff.is_empty() && properties.iter().all(|p| p.passed) && fuzz.is_empty()
+    }
+
+    /// A result for a test that could not be run at all. It fails, and it says
+    /// why -- rather than taking the rest of the suite down with it.
+    #[must_use]
+    pub fn errored(id: String, error: String) -> Self {
+        Self {
+            id,
+            passed: false,
+            error: Some(error),
+            diff: Vec::new(),
+            property_results: Vec::new(),
+            fuzz_failures: Vec::new(),
+            report_hash: None,
+        }
     }
 }

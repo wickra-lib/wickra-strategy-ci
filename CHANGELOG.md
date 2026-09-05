@@ -6,6 +6,27 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- **One broken test took the whole suite down.** `run_suite` collected its
+  results with `?`, so a single test whose `dataset_ref` did not resolve — or
+  whose spec the engine rejected — made the call return `Err`. The CLI printed
+  one error line and exited, and you learned nothing about the other tests in the
+  run. For a test runner that is the wrong shape of failure: a typo in one file
+  hid the verdict on every other file. A test that cannot be run is now a
+  **failing test** that carries the reason, and the suite still reports on
+  everything else.
+  `TestResult` gains an `error` field, skipped when absent, so a result for a
+  test that ran serialises exactly as before and every committed golden is
+  unchanged.
+- **The release workflow kept its token in the runner's git config.** The
+  `major-tag` job was the one checkout in the repository with
+  `persist-credentials: true`, and it kept them for the whole job to run a single
+  `git push`. Moving a ref needs no working tree and no git credentials — the
+  API does it directly — so the checkout is gone with them. The API call also
+  handles the first release of a major version, where there is no tag to move
+  yet.
+
 ### Added
 
 - **Every binding now checks that the batch path equals the per-test path.**

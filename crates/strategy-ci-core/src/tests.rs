@@ -235,6 +235,51 @@ fn well_formed_repair_preserves_the_drawn_prices() {
     }
 }
 
+/// A suite reports on every test it was given. Before this, one test whose
+/// dataset was missing made `run_suite` return `Err`, so a single typo in one
+/// `dataset_ref` hid the verdict on every other test in the run -- the CLI
+/// printed one line and exited, and you learned nothing about the other 199.
+#[test]
+fn a_broken_test_fails_without_taking_the_suite_down() {
+    let data = data();
+    let good = base_test();
+    let mut broken = base_test();
+    broken.id = "broken".into();
+    broken.dataset_ref = "does-not-exist".into();
+
+    let suite = run_suite(&[good, broken], &data).expect("the suite still runs");
+
+    assert_eq!(suite.results.len(), 2);
+    assert_eq!(suite.passed, 1);
+    assert_eq!(suite.failed, 1);
+
+    // Sorted by id: "broken" before "momentum".
+    let broken = &suite.results[0];
+    assert_eq!(broken.id, "broken");
+    assert!(!broken.passed);
+    assert!(broken
+        .error
+        .as_deref()
+        .is_some_and(|e| e.contains("does-not-exist")));
+    // A test that never ran has no diff or property result behind it.
+    assert!(broken.diff.is_empty());
+    assert!(broken.property_results.is_empty());
+
+    assert!(suite.results[1].passed);
+    assert!(suite.results[1].error.is_none());
+}
+
+/// The new field is skipped when absent, so a result for a test that ran
+/// serialises exactly as it did before the field existed. That is what keeps
+/// every committed golden byte-identical.
+#[test]
+fn a_result_that_ran_serialises_without_the_error_field() {
+    let data = data();
+    let result = run_test(&base_test(), &data).expect("run");
+    let json = serde_json::to_string(&result).expect("serialize");
+    assert!(!json.contains("error"), "{json}");
+}
+
 #[test]
 fn run_test_and_bless_and_suite_end_to_end() {
     let data = data();

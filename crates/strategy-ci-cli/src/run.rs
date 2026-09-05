@@ -68,6 +68,12 @@ fn render_one(out: &mut String, result: &TestResult) {
     if result.passed {
         return;
     }
+    // A test that could not be run at all reports why, and has nothing else to
+    // say -- there is no diff or property result behind it.
+    if let Some(error) = &result.error {
+        let _ = writeln!(out, "  error: {error}");
+        return;
+    }
     for diff in &result.diff {
         let _ = writeln!(
             out,
