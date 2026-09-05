@@ -159,6 +159,82 @@ static void append_csv_as_candles(Buf *cmd, const char *name) {
     free(text);
 }
 
+/* Run one command through a session, returning a malloc'd response. The ABI's
+ * two-call protocol lives here so the checks below read as what they assert. */
+static char *run(WickraStrategyCi *session, const char *cmd) {
+    int32_t len = wickra_strategy_ci_command(session, cmd, NULL, 0);
+    if (len < 0) {
+        fprintf(stderr, "command failed with code %d\n", len);
+        exit(1);
+    }
+    char *out = malloc((size_t)len + 1);
+    if (out == NULL) {
+        fprintf(stderr, "out of memory\n");
+        exit(1);
+    }
+    wickra_strategy_ci_command(session, cmd, out, (uintptr_t)len + 1);
+    return out;
+}
+
+/* The batch path against the per-test path. run_suite fans the corpus out across
+ * rayon and sorts the results by id; run_test walks one test at a time. Those
+ * are two different engines reached through the same ABI, and only the Rust core
+ * tested that they agree -- through the C boundary the parallel path is a
+ * separate claim.
+ *
+ * Compared as text: each golden file is named after the id it carries, so the
+ * sorted file order is the sorted id order run_suite emits, and the per-test
+ * responses concatenated are exactly the suite's results array. */
+static int check_batch_equals_per_test(WickraStrategyCi *session, const char *suite,
+                                       const char *data) {
+    const char *marker = "\"results\":[";
+    const char *from = strstr(suite, marker);
+    const char *to = strstr(suite, "],\"passed\":");
+    if (from == NULL || to == NULL || to <= from) {
+        fprintf(stderr, "the suite response has no results array\n");
+        return 0;
+    }
+    from += strlen(marker);
+
+    Buf joined;
+    buf_init(&joined);
+    for (size_t i = 0; i < sizeof(TESTS) / sizeof(TESTS[0]); ++i) {
+        char path[1024];
+        snprintf(path, sizeof(path), "%s/tests/%s.json", WKSTRATEGYCI_GOLDEN_DIR, TESTS[i]);
+        char *test = slurp(path);
+        rstrip(test);
+
+        Buf one;
+        buf_init(&one);
+        buf_str(&one, "{\"cmd\":\"run_test\",\"test\":");
+        buf_str(&one, test);
+        buf_str(&one, ",\"data\":");
+        buf_str(&one, data);
+        buf_str(&one, "}");
+        free(test);
+
+        char *response = run(session, one.data);
+        free(one.data);
+        if (i > 0) {
+            buf_str(&joined, ",");
+        }
+        buf_str(&joined, response);
+        free(response);
+    }
+
+    size_t batch_len = (size_t)(to - from);
+    int same = joined.len == batch_len && memcmp(joined.data, from, batch_len) == 0;
+    if (!same) {
+        fprintf(stderr, "the batch path does not equal the per-test path\n");
+        fprintf(stderr, " batch: %.*s\n", (int)batch_len, from);
+        fprintf(stderr, "  each: %s\n", joined.data);
+    } else {
+        printf("C parity: the batch path equals the per-test path\n");
+    }
+    free(joined.data);
+    return same;
+}
+
 int main(void) {
     Buf cmd;
     buf_init(&cmd);
@@ -174,14 +250,20 @@ int main(void) {
         buf_str(&cmd, text);
         free(text);
     }
-    buf_str(&cmd, "],\"data\":{");
+    Buf data;
+    buf_init(&data);
+    buf_str(&data, "{");
     for (size_t i = 0; i < sizeof(DATASETS) / sizeof(DATASETS[0]); ++i) {
         if (i > 0) {
-            buf_str(&cmd, ",");
+            buf_str(&data, ",");
         }
-        append_csv_as_candles(&cmd, DATASETS[i]);
+        append_csv_as_candles(&data, DATASETS[i]);
     }
-    buf_str(&cmd, "}}");
+    buf_str(&data, "}");
+
+    buf_str(&cmd, "],\"data\":");
+    buf_str(&cmd, data.data);
+    buf_str(&cmd, "}");
 
     WickraStrategyCi *session = wickra_strategy_ci_new();
     if (session == NULL) {
@@ -189,21 +271,11 @@ int main(void) {
         return 1;
     }
 
-    int32_t len = wickra_strategy_ci_command(session, cmd.data, NULL, 0);
-    if (len < 0) {
-        fprintf(stderr, "command failed with code %d\n", len);
-        wickra_strategy_ci_free(session);
-        return 1;
-    }
-    char *response = malloc((size_t)len + 1);
-    if (response == NULL) {
-        fprintf(stderr, "out of memory\n");
-        wickra_strategy_ci_free(session);
-        return 1;
-    }
-    wickra_strategy_ci_command(session, cmd.data, response, (uintptr_t)len + 1);
+    char *response = run(session, cmd.data);
+    int parity = check_batch_equals_per_test(session, response, data.data);
     wickra_strategy_ci_free(session);
     free(cmd.data);
+    free(data.data);
 
     char expected_path[1024];
     snprintf(expected_path, sizeof(expected_path), "%s/expected/suite.json",
@@ -212,7 +284,7 @@ int main(void) {
     rstrip(expected);
     rstrip(response);
 
-    int same = strcmp(response, expected) == 0;
+    int same = strcmp(response, expected) == 0 && parity;
     if (!same) {
         fprintf(stderr, "the C ABI does not reproduce the golden suite\n");
         fprintf(stderr, "expected: %s\n", expected);

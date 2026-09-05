@@ -96,4 +96,37 @@ if (wasm) {
     const response = JSON.parse(new wasm.Session().command('{"cmd":"nope"}'));
     assert.strictEqual(response.ok, false);
   });
+
+  // The batch path against the per-test path, on the engine no other binding
+  // exercises: the WASM build is compiled with --no-default-features, so its
+  // run_suite walks the tests sequentially where every native binding fans them
+  // out across rayon. That the two produce the same bytes is the claim that lets
+  // a browser and a server agree, and only the Rust core tested it.
+  test("wasm run_suite agrees with running each test on its own", () => {
+    const data = { "sym-01": candles() };
+    // Deliberately not in sorted order: run_suite sorts by id, and a suite that
+    // returned them in submission order would pass a same-order comparison.
+    const tests = ["momentum", "crossover", "baseline"].map((id) => ({
+      id,
+      strategy: STRATEGY,
+      dataset_ref: "sym-01",
+      property_checks: [{ kind: "no_nan" }],
+    }));
+
+    const session = new wasm.Session();
+    const batch = JSON.parse(
+      session.command(JSON.stringify({ cmd: "run_suite", tests, data })),
+    ).results;
+
+    const individual = tests
+      .map((test) => JSON.parse(session.command(JSON.stringify({ cmd: "run_test", test, data }))))
+      .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+
+    assert.deepStrictEqual(batch.map((r) => r.id), ["baseline", "crossover", "momentum"]);
+    assert.strictEqual(
+      JSON.stringify(batch),
+      JSON.stringify(individual),
+      "the batch path must equal the per-test path",
+    );
+  });
 }

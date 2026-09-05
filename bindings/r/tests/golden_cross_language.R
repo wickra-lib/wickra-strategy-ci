@@ -61,4 +61,32 @@ want <- trimws(paste(
 ))
 stopifnot(identical(trimws(got), want))
 
+## The batch path against the per-test path. run_suite fans the corpus out across
+## rayon and sorts the results by id; run_test walks one test at a time. Those are
+## two different engines reached through the same C ABI boundary, and only the
+## Rust core tested that they agree -- from a binding, the parallel path crossing
+## the boundary is a separate claim.
+##
+## Compared as text: each golden file is named after the id it carries, so the
+## sorted file order is the sorted id order run_suite emits, and the per-test
+## responses concatenated are exactly the suite's results array.
+marker <- '"results":['
+from <- regexpr(marker, got, fixed = TRUE)
+stopifnot(from > 0)
+batch <- substring(got, from + nchar(marker))
+to <- regexpr('],"passed":', batch, fixed = TRUE)
+stopifnot(to > 0)
+batch <- substring(batch, 1, to - 1)
+
+data_json <- load_golden_data(g)
+individual <- vapply(tests, function(test) {
+  wkstrategyci_command(
+    session,
+    paste0('{"cmd":"run_test","test":', test, ',"data":', data_json, "}")
+  )
+}, character(1))
+
+stopifnot(identical(paste(individual, collapse = ","), batch))
+
 cat("wickra-strategy-ci R cross-language golden matches\n")
+cat("wickra-strategy-ci R batch path equals the per-test path\n")
