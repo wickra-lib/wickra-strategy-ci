@@ -8,6 +8,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **`Cargo.lock` did not match the manifests, so `cargo build --locked` failed.**
+  When the benchmark crate moved to `codspeed-criterion-compat`, the lockfile was
+  not regenerated with it: `codspeed`, `codspeed-criterion-compat` and their
+  transitive dependencies were absent entirely. Every `--locked` build would have
+  refused to start, and the CodSpeed job could not have built its benchmarks. The
+  lockfile is regenerated and `cargo build --locked --workspace --all-features`
+  now succeeds.
+
+
 - The `semver` and `examples-smoke` jobs pinned `Swatinem/rust-cache` with a bare
   `# v2` comment, too coarse for Dependabot to act on; both now name v2.9.2, the
   version the rest of the organisation pins.
