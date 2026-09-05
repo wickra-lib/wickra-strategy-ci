@@ -20,6 +20,9 @@ struct TestEnvelope {
     test: StrategyTest,
     #[serde(default)]
     data: DataMap,
+    /// Ask for the optional `report_hash` in the response. See [`SuiteEnvelope`].
+    #[serde(default)]
+    report_hash: bool,
 }
 
 #[derive(Deserialize)]
@@ -27,6 +30,21 @@ struct SuiteEnvelope {
     tests: Vec<StrategyTest>,
     #[serde(default)]
     data: DataMap,
+    /// Ask for the optional `report_hash` in each result.
+    ///
+    /// It is opt-in per request rather than per build on purpose. This boundary
+    /// is the cross-language contract -- the claim is that the same command
+    /// produces the same bytes in ten languages -- and a field that appears or
+    /// vanishes depending on which features the library was compiled with is not
+    /// a stable contract. Building the workspace with `--all-features` enables
+    /// `proof`, and every binding's golden comparison then failed against a
+    /// corpus pinned without it.
+    ///
+    /// So the default response never carries the hash, whatever the build, and a
+    /// caller that wants it says so. When the `proof` feature is off there is
+    /// nothing to give and the field stays absent.
+    #[serde(default)]
+    report_hash: bool,
 }
 
 #[derive(Deserialize)]
@@ -77,7 +95,10 @@ fn dispatch(cmd_json: &str) -> Result<String> {
     match cmd {
         "run_test" => {
             let env: TestEnvelope = serde_json::from_value(envelope)?;
-            let result = runner::run_test(&env.test, &env.data)?;
+            let mut result = runner::run_test(&env.test, &env.data)?;
+            if !env.report_hash {
+                result.report_hash = None;
+            }
             Ok(serde_json::to_string(&result)?)
         }
         "bless" => {
@@ -87,7 +108,12 @@ fn dispatch(cmd_json: &str) -> Result<String> {
         }
         "run_suite" => {
             let env: SuiteEnvelope = serde_json::from_value(envelope)?;
-            let result = runner::run_suite(&env.tests, &env.data)?;
+            let mut result = runner::run_suite(&env.tests, &env.data)?;
+            if !env.report_hash {
+                for test in &mut result.results {
+                    test.report_hash = None;
+                }
+            }
             Ok(serde_json::to_string(&result)?)
         }
         "list" => {

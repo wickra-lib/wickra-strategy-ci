@@ -8,6 +8,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **A build flag changed the wire format.** With the `proof` feature compiled in,
+  every response carried a `report_hash`, so a library built with
+  `--all-features` failed every binding's golden comparison against a corpus
+  pinned without it. The C# and Java suites hit exactly that, twice, and the Rust
+  golden test had been quietly stripping the field for the same reason.
+  That contradicts the claim this boundary exists to make: the same command
+  produces the same bytes in ten languages. The hash is now opt-in **per request**
+  (`"report_hash": true`) rather than per build, so the default response is
+  identical whatever the library was compiled with. Two tests pin it, and both
+  pass with the feature on and off.
+
+
 - **One broken test took the whole suite down.** `run_suite` collected its
   results with `?`, so a single test whose `dataset_ref` did not resolve — or
   whose spec the engine rejected — made the call return `Err`. The CLI printed
