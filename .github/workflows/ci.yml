@@ -275,8 +275,16 @@ jobs:
   # The published API is a promise. Nothing checked that a patch release keeps
   # it, and the surface is what ten bindings sit on top of -- exactly the shape
   # where a rename slips through review and out to six registries in one
-  # irreversible run. The baseline is whatever is already on crates.io; before
-  # the first release there is none, which the tool reports and skips.
+  # irreversible run. The baseline is whatever is already on crates.io.
+  #
+  # Before a crate's first release there is no baseline, and cargo-semver-checks
+  # does NOT skip in that case -- it exits 101 with "not found in registry".
+  # Both crates here are unpublished, so this job failed on every run from the
+  # day it landed, and release.yml's gate refuses to publish while any check on
+  # the commit has failed: the job meant to protect the release was preventing
+  # it. So the registry is asked first, and only crates it can actually compare
+  # are checked. The moment a crate is published, its baseline appears and it is
+  # covered with no further change here.
   semver:
     name: Public API (cargo-semver-checks)
     timeout-minutes: 30 # backstop: it builds rustdoc JSON per crate and baseline
@@ -291,7 +299,25 @@ jobs:
         with:
           tool: cargo-semver-checks
       - name: Check the public API against the published baseline
-        run: cargo semver-checks --package strategy-ci-core --package wickra-strategy-ci
+        run: |
+          set -euo pipefail
+          packages=()
+          for pkg in strategy-ci-core wickra-strategy-ci; do
+            # crates.io answers 403 to a request without a User-Agent, so send
+            # one: an unauthenticated 403 must not be mistaken for "unpublished".
+            code=$(curl -sS -o /dev/null -w '%{http_code}'                      -A 'wickra-strategy-ci CI (+https://github.com/wickra-lib/wickra-strategy-ci)'                      "https://crates.io/api/v1/crates/${pkg}")
+            case "${code}" in
+              200) packages+=(--package "${pkg}") ;;
+              404) echo "::notice::${pkg} is not on crates.io yet; no baseline to compare against." ;;
+              *)   echo "::error::crates.io answered ${code} for ${pkg}; refusing to guess whether a baseline exists."
+                   exit 1 ;;
+            esac
+          done
+          if [ "${#packages[@]}" -eq 0 ]; then
+            echo "::notice::no crate here is published yet; there is no public API to have broken."
+            exit 0
+          fi
+          cargo semver-checks "${packages[@]}"
 
   # External link rot is non-deterministic -- third-party sites go down, rate
   # limit, or move -- so this reports without blocking. The authoritative run is

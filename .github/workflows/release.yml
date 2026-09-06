@@ -1008,6 +1008,16 @@ jobs:
           VERSION: ${{ steps.tag.outputs.version }}
         shell: bash
         run: |
+          # shellcheck disable=SC2016
+          # SC2016 ("expressions don't expand in single quotes") is wrong here
+          # three times over, and the directive sits at the top of the script
+          # because all three are below it. The single quotes are the point:
+          # envsubst is handed the literal *names* of the only two variables it
+          # may expand, and the greps look for a literal '${' left behind in the
+          # rendered notes. Let the shell expand either and the step substitutes
+          # nothing and then finds nothing -- it would go green while shipping
+          # "${TAG}" verbatim into the published release notes, which is the
+          # exact failure the grep exists to catch.
           set -euo pipefail
           # Drop the template's own HTML comment header (it documents the
           # template, not the release), then substitute only TAG and VERSION so
