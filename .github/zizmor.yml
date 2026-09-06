@@ -18,7 +18,20 @@
 #   The GitHub release step uses softprops/action-gh-release. The runner ships
 #   `gh`, so this is replaceable by a script step, but the action is stable and
 #   battle-tested; we keep it deliberately.
+#
+# github-env (action.yml):
+#   The install step appends "$HOME/.wickra/bin" to GITHUB_PATH. zizmor flags
+#   GITHUB_PATH writes because a value taken from untrusted input can put an
+#   attacker's directory ahead of the real one for every later step. This value
+#   is a constant the action computes itself -- no input reaches it -- and
+#   putting the installed CLI on PATH is the entire purpose of the step: a
+#   composite action cannot hand a binary to the steps that follow any other
+#   way. The template-injection findings alongside it were real and are fixed
+#   in the step itself rather than ignored here.
 rules:
+  github-env:
+    ignore:
+      - action.yml
   cache-poisoning:
     ignore:
       - release.yml

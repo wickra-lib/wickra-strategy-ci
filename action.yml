@@ -85,14 +85,29 @@ runs:
 
     - id: run
       shell: bash
+      # Every input reaches the script as an environment variable rather than
+      # through `${{ }}`. Expanding them inline pastes the caller's text into
+      # this shell before bash parses it, so a `tests:` of `x"; curl … | sh; #`
+      # executes in the caller's job -- and the values a caller passes are often
+      # themselves derived from a branch name, a PR title or an issue body. As
+      # env vars they are data: bash sees the variable, never the text.
+      env:
+        WSCI_TESTS: "${{ inputs.tests }}"
+        WSCI_DATA: "${{ inputs.data }}"
+        WSCI_FORMAT: "${{ inputs.format }}"
+        WSCI_FAIL_FAST: "${{ inputs.fail-fast }}"
       run: |
         set -euo pipefail
-        extra=""
-        if [ "${{ inputs.fail-fast }}" = "true" ]; then extra="--fail-fast"; fi
-        wickra-strategy-ci run "${{ inputs.tests }}" \
-          --data "${{ inputs.data }}" \
-          --format "${{ inputs.format }}" ${extra} | tee out.txt
-        if [ "${{ inputs.format }}" = "json" ]; then
+        # The whole command line as one array, so the optional flag is appended
+        # as a single argument and a path containing a space stays one argument.
+        # The previous unquoted "${extra}" relied on word splitting for both.
+        # Built up from the subcommand rather than started empty, because
+        # expanding an empty array under `set -u` is an error in bash 3.2, which
+        # is what a macOS runner still provides as /bin/bash.
+        args=(run "${WSCI_TESTS}" --data "${WSCI_DATA}" --format "${WSCI_FORMAT}")
+        if [ "${WSCI_FAIL_FAST}" = "true" ]; then args+=(--fail-fast); fi
+        wickra-strategy-ci "${args[@]}" | tee out.txt
+        if [ "${WSCI_FORMAT}" = "json" ]; then
           {
             echo "result<<WSCI_EOF"
             cat out.txt

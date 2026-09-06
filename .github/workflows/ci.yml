@@ -416,9 +416,19 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - uses: ./.github/actions/setup-rust
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-      - run: pip install maturin pytest
+      # From the hash-locked lockfile, not by name. `.github/requirements/`
+      # already held a pip-compile --generate-hashes lock of exactly these two
+      # packages -- update-lockfiles.sh maintains it and the audit checks it --
+      # but nothing ever installed from it, so CI resolved maturin and pytest
+      # fresh on every run and the lock was decoration. `--require-hashes` makes
+      # the file load-bearing: a package that does not match it fails the job.
+      # The lock is compiled to cover 3.9 through 3.13, so one file serves the
+      # whole matrix.
+      - run: pip install --require-hashes -r .github/requirements/ci-dev.txt
       - run: maturin build --out dist
         working-directory: bindings/python
+      # The wheel just built, from disk: --no-index means no network resolution,
+      # so there is nothing to hash-pin here.
       - run: pip install --no-index --find-links bindings/python/dist wickra-strategy-ci
       - run: pytest bindings/python/tests -q
 
