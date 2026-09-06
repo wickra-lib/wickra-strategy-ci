@@ -12,7 +12,7 @@
 
 use wasm_bindgen::prelude::*;
 
-use strategy_ci_core::Session as CoreSession;
+use wickra_strategy_ci_core::Session as CoreSession;
 
 /// A stateless strategy-test session driven by JSON commands.
 #[wasm_bindgen]
@@ -41,12 +41,12 @@ impl Session {
     /// The library version.
     #[wasm_bindgen(js_name = version)]
     pub fn instance_version(&self) -> String {
-        strategy_ci_core::VERSION.to_string()
+        wickra_strategy_ci_core::VERSION.to_string()
     }
 }
 
 /// The library version.
 #[wasm_bindgen]
 pub fn version() -> String {
-    strategy_ci_core::VERSION.to_string()
+    wickra_strategy_ci_core::VERSION.to_string()
 }

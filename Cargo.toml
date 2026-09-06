@@ -1,6 +1,6 @@
 # Wickra Strategy-CI — workspace.
 # A test runner for trading strategies built as one data-driven core
-# (`strategy-ci-core`): a serde StrategyTest model carries an opaque
+# (`wickra-strategy-ci-core`): a serde StrategyTest model carries an opaque
 # `StrategySpec` sub-JSON that is forwarded verbatim to the `wickra-backtest`
 # engine, the resulting `BacktestReport` is golden-pinned and asserted (with
 # tolerances), and strategies are property-tested against deterministically
@@ -10,21 +10,21 @@
 # composite GitHub Action.
 #
 # The `members` list grows as crates are added, phase by phase; the final set is:
-#   crates/strategy-ci-core, crates/strategy-ci-cli, crates/strategy-ci-bench,
+#   crates/wickra-strategy-ci-core, crates/wickra-strategy-ci-cli, crates/strategy-ci-bench,
 #   bindings/c, bindings/python, bindings/node, bindings/wasm
 
 [workspace]
 resolver = "2"
 # Members are added phase by phase as their crates land; the final set is
-# strategy-ci-core, strategy-ci-cli, strategy-ci-bench, bindings/{c,python,node,wasm}
+# wickra-strategy-ci-core, strategy-ci-cli, strategy-ci-bench, bindings/{c,python,node,wasm}
 # and examples/rust.
-members = ["crates/strategy-ci-core", "crates/strategy-ci-cli", "crates/strategy-ci-bench", "bindings/c", "bindings/python", "bindings/node", "bindings/wasm", "examples/rust"]
+members = ["crates/wickra-strategy-ci-core", "crates/wickra-strategy-ci-cli", "crates/strategy-ci-bench", "bindings/c", "bindings/python", "bindings/node", "bindings/wasm", "examples/rust"]
 # The fuzz crate is its own (detached) workspace — cargo-fuzz builds it on a
 # nightly toolchain with sanitizer flags.
 exclude = ["fuzz"]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 rust-version = "1.86"
 license = "MIT OR Apache-2.0"
@@ -53,7 +53,7 @@ categories = ["finance", "development-tools::testing"]
 # dependency back would mean two crates defining the same row.
 wickra-backtest-core = "0.1.4"
 # Workspace-internal crate, referenced by the CLI, bench and bindings.
-strategy-ci-core = { version = "0.1.0", path = "crates/strategy-ci-core" }
+wickra-strategy-ci-core = { version = "0.1.1", path = "crates/wickra-strategy-ci-core" }
 # Serialization — the data-driven boundary (test/command/result as JSON).
 serde = { version = "1", features = ["derive"] }
 # `float_roundtrip`: serde_json's default float parser is fast but not

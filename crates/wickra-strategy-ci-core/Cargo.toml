@@ -1,5 +1,5 @@
 [package]
-name = "strategy-ci-core"
+name = "wickra-strategy-ci-core"
 description = "Data-driven core of Wickra Strategy-CI: golden-pin a strategy's backtest report, assert tolerances and invariant properties, and fuzz-test against seeded data perturbations."
 version.workspace = true
 edition.workspace = true

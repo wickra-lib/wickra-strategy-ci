@@ -11,7 +11,7 @@ use std::collections::BTreeMap;
 
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use serde_json::json;
-use strategy_ci_core::{run_suite, Candle, StrategyTest};
+use wickra_strategy_ci_core::{run_suite, Candle, StrategyTest};
 
 /// A deterministic, non-degenerate `bars`-long candle universe for one symbol.
 fn universe(bars: usize) -> Vec<Candle> {

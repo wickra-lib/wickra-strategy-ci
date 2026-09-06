@@ -8,7 +8,7 @@ use std::collections::BTreeMap;
 
 use proptest::prelude::*;
 use serde_json::{json, Value};
-use strategy_ci_core::{check_all, diff_reports, flatten_report, Property, Tolerance};
+use wickra_strategy_ci_core::{check_all, diff_reports, flatten_report, Property, Tolerance};
 
 /// A small report: a flat object of finite f64 metrics plus a short equity array.
 fn report_strategy() -> impl Strategy<Value = Value> {

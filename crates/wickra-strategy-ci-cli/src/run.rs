@@ -3,7 +3,7 @@
 use std::fs;
 use std::path::Path;
 
-use strategy_ci_core::{bless as bless_test, run_suite, SuiteResult, TestResult};
+use wickra_strategy_ci_core::{bless as bless_test, run_suite, SuiteResult, TestResult};
 
 use crate::args::Format;
 use crate::load::{load_data, load_tests};

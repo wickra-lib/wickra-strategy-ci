@@ -1133,25 +1133,11 @@ dependencies = [
 
 [[package]]
 name = "strategy-ci-bench"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "codspeed-criterion-compat",
  "serde_json",
- "strategy-ci-core",
-]
-
-[[package]]
-name = "strategy-ci-core"
-version = "0.1.0"
-dependencies = [
- "proptest",
- "rand 0.10.2",
- "rand_pcg",
- "rayon",
- "serde",
- "serde_json",
- "thiserror",
- "wickra-backtest-core",
+ "wickra-strategy-ci-core",
 ]
 
 [[package]]
@@ -1368,55 +1354,69 @@ dependencies = [
 ]
 
 [[package]]
-name = "wickra-strategy-ci"
-version = "0.1.0"
+name = "wickra-strategy-ci-c"
+version = "0.1.1"
 dependencies = [
- "clap",
  "serde_json",
- "strategy-ci-core",
+ "wickra-strategy-ci-core",
 ]
 
 [[package]]
-name = "wickra-strategy-ci-c"
-version = "0.1.0"
+name = "wickra-strategy-ci-cli"
+version = "0.1.1"
 dependencies = [
+ "clap",
  "serde_json",
- "strategy-ci-core",
+ "wickra-strategy-ci-core",
+]
+
+[[package]]
+name = "wickra-strategy-ci-core"
+version = "0.1.1"
+dependencies = [
+ "proptest",
+ "rand 0.10.2",
+ "rand_pcg",
+ "rayon",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "wickra-backtest-core",
 ]
 
 [[package]]
 name = "wickra-strategy-ci-example"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "serde_json",
- "strategy-ci-core",
+ "wickra-strategy-ci-core",
 ]
 
 [[package]]
 name = "wickra-strategy-ci-node"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "napi",
  "napi-build",
  "napi-derive",
- "strategy-ci-core",
+ "wickra-strategy-ci-core",
 ]
 
 [[package]]
 name = "wickra-strategy-ci-python"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "pyo3",
- "strategy-ci-core",
+ "wickra-strategy-ci-core",
 ]
 
 [[package]]
 name = "wickra-strategy-ci-wasm"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "getrandom 0.2.17",
- "strategy-ci-core",
  "wasm-bindgen",
+ "wickra-strategy-ci-core",
 ]
 
 [[package]]

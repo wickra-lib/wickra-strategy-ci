@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use strategy_ci_core::{Candle, StrategyTest};
+use wickra_strategy_ci_core::{Candle, StrategyTest};
 
 /// Load one test file or a directory of `*.json` tests, sorted by path so the
 /// suite order is deterministic. Each entry keeps its source path so `bless` can

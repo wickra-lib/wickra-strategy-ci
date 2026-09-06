@@ -32,7 +32,7 @@ fn main() -> ExitCode {
         Command::Bless { path, data } => run::bless(&path, &data).map(|()| ExitCode::SUCCESS),
         Command::List { path } => run::list(&path).map(|()| ExitCode::SUCCESS),
         Command::Version => {
-            println!("{}", strategy_ci_core::VERSION);
+            println!("{}", wickra_strategy_ci_core::VERSION);
             Ok(ExitCode::SUCCESS)
         }
     };

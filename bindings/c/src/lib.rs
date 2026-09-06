@@ -10,7 +10,7 @@ use std::ffi::{c_char, CStr};
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::ptr;
 
-use strategy_ci_core::Session;
+use wickra_strategy_ci_core::Session;
 
 /// Opaque handle wrapping a [`Session`].
 pub struct WickraStrategyCi(Session);
@@ -177,7 +177,7 @@ mod tests {
         let version = unsafe { CStr::from_ptr(wickra_strategy_ci_version()) }
             .to_str()
             .unwrap();
-        assert_eq!(version, strategy_ci_core::VERSION);
+        assert_eq!(version, wickra_strategy_ci_core::VERSION);
     }
 
     #[test]

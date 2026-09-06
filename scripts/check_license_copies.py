@@ -32,9 +32,15 @@ import sys
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 TEXTS = ("LICENSE-MIT", "LICENSE-APACHE")
 
-# Crates that are published to crates.io. A crate with `publish = false` ships
-# nowhere and needs no copy.
-PUBLISHED_CRATES = ("strategy-ci-core", "strategy-ci-cli")
+# Crate directories that are published to crates.io. A crate with
+# `publish = false` ships nowhere and needs no copy.
+#
+# These are directory names under crates/, and they track the package names:
+# `wickra-strategy-ci-core` and `wickra-strategy-ci-cli`. Spelled out rather
+# than globbed so that a new crate under crates/ has to be considered here
+# rather than silently inheriting the requirement -- crates/*-bench is not
+# published and needs no copy.
+PUBLISHED_CRATES = ("wickra-strategy-ci-core", "wickra-strategy-ci-cli")
 
 NPM_PLATFORMS = [
     "darwin-arm64", "darwin-x64", "linux-arm64-gnu",

@@ -7,11 +7,11 @@ open an issue first so we can agree on the approach.
 ## Orientation
 
 - The core — the `StrategyTest` model, tolerances, property definitions, the
-  fuzz-data generator and the test runner — lives in `crates/strategy-ci-core`.
+  fuzz-data generator and the test runner — lives in `crates/wickra-strategy-ci-core`.
   A test is **data, not code**: a serde tree carrying an opaque `StrategySpec`
   sub-JSON that is passed verbatim to the `wickra-backtest` engine, so the same
   test crosses the C ABI and WASM unchanged.
-- The reference consumer is `crates/strategy-ci-cli` (the `wickra-strategy-ci`
+- The reference consumer is `crates/wickra-strategy-ci-cli` (the `wickra-strategy-ci`
   binary) plus the composite GitHub Action in `action.yml`.
 - Every language binding lives under `bindings/<lang>/` and exposes the same
   data-driven surface: a `Session` handle plus `command(json) -> json` and
@@ -53,7 +53,7 @@ produce a byte-identical result either way.
 
 Assertions and properties are serde enums, so extending the runner means adding a
 variant, not a closure. A new report-field assertion, tolerance mode or invariant
-property is added to `crates/strategy-ci-core/src/model.rs` (or `property.rs`) and
+property is added to `crates/wickra-strategy-ci-core/src/model.rs` (or `property.rs`) and
 handled in `src/runner.rs`, with a serde round-trip test and a golden fixture. The
 backtest itself comes from the
 [wickra-backtest](https://github.com/wickra-lib/wickra-backtest) engine — the

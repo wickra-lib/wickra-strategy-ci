@@ -8,7 +8,7 @@ GitHub Action.
 
 ```
 crates/
-  strategy-ci-core/    the library: model, tolerances, properties, fuzz, runner, session
+  wickra-strategy-ci-core/    the library: model, tolerances, properties, fuzz, runner, session
   strategy-ci-cli/     the reference `wickra-strategy-ci` binary
   strategy-ci-bench/   criterion benchmarks
 bindings/
@@ -24,7 +24,7 @@ fuzz/                  cargo-fuzz targets (detached workspace)
 
 ## The core
 
-`strategy-ci-core` is the whole engine. Its axes:
+`wickra-strategy-ci-core` is the whole engine. Its axes:
 
 - **Model** (`model.rs`) — `StrategyTest` (the unit of testing), `TestResult`,
   and the assertions over a `BacktestReport`. The `strategy` field is an **opaque

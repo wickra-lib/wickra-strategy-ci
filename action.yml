@@ -79,7 +79,7 @@ runs:
           # first published release. Remove once releases carry CLI assets.
           echo "no release asset for ${tag:-latest}; building from git (pre-release fallback)"
           cargo install --git https://github.com/wickra-lib/wickra-strategy-ci \
-            wickra-strategy-ci --root "${HOME}/.wickra" --locked
+            wickra-strategy-ci-cli --root "${HOME}/.wickra" --locked
         fi
         echo "${HOME}/.wickra/bin" >> "${GITHUB_PATH}"
 

@@ -29,10 +29,10 @@ workspace = true
 # inherited workspace dependency. The pinned backtest engine is sequential (no
 # rayon), so a wasm run is byte-identical to the native one — the exact
 # cross-language golden check.
-strategy-ci-core = { path = "../../crates/strategy-ci-core", version = "0.1.0", default-features = false }
+wickra-strategy-ci-core = { path = "../../crates/wickra-strategy-ci-core", version = "0.1.1", default-features = false }
 wasm-bindgen = "0.2"
 
-# strategy-ci-core's seeded fuzz-data RNG (via `rand`) pulls in `getrandom`,
+# wickra-strategy-ci-core's seeded fuzz-data RNG (via `rand`) pulls in `getrandom`,
 # which needs its JS-backed entropy source to compile for
 # `wasm32-unknown-unknown`. The RNG is only ever seeded explicitly (never from
 # entropy), so this backend is never actually called — it only satisfies the
