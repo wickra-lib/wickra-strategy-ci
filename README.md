@@ -240,7 +240,7 @@ Strategy-CI is one repo in the [Wickra](https://github.com/wickra-lib) family:
 | [wickra](https://github.com/wickra-lib/wickra) | The indicator core — 514 streaming indicators, O(1) per tick, in ten languages. |
 | [wickra-backtest](https://github.com/wickra-lib/wickra-backtest) | The deterministic engine whose `BacktestReport` this repo pins. |
 | [wickra-data](https://github.com/wickra-lib/wickra) | Candle types and CSV/exchange loading. |
-| [wickra-proof](https://github.com/wickra-lib/wickra-proof) | Verifiable report hashes — the optional `proof` feature here. |
+| [wickra-proof](https://github.com/wickra-lib/wickra-proof) | Verifiable report hashes — a roadmap item for this repo. |
 | [wickra-synth](https://github.com/wickra-lib/wickra-synth) | Deterministic synthetic market data, useful as fuzz input. |
 | [wickra-exchange](https://github.com/wickra-lib/wickra-exchange) | Live and historical exchange connectivity. |
 

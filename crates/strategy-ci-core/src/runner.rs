@@ -44,12 +44,6 @@ fn round_report(report: &ReportJson) -> ReportJson {
     }
 }
 
-#[cfg(feature = "proof")]
-fn report_hash(report: &ReportJson) -> Result<String> {
-    let canonical = proof_core::canonicalize(report).map_err(|e| Error::Backtest(e.to_string()))?;
-    Ok(blake3::hash(canonical.as_bytes()).to_hex().to_string())
-}
-
 fn run_fuzz(
     test: &StrategyTest,
     candles: &[Candle],
@@ -96,11 +90,6 @@ pub fn run_test(test: &StrategyTest, data: &BTreeMap<String, Vec<Candle>>) -> Re
         None => Vec::new(),
     };
 
-    #[cfg(feature = "proof")]
-    let report_hash = Some(report_hash(&report)?);
-    #[cfg(not(feature = "proof"))]
-    let report_hash = None;
-
     let passed = TestResult::is_pass(&diff, &property_results, &fuzz_failures);
     Ok(TestResult {
         id: test.id.clone(),
@@ -109,7 +98,6 @@ pub fn run_test(test: &StrategyTest, data: &BTreeMap<String, Vec<Candle>>) -> Re
         diff,
         property_results,
         fuzz_failures,
-        report_hash,
     })
 }
 

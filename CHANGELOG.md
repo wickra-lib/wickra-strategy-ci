@@ -8,6 +8,38 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **The crate could not be published at all.** `strategy-ci-core` declared
+  `proof-core` as an optional dependency taken from git. `cargo publish`
+  resolves *every* dependency against the registry, optional ones included, so
+  the very first step of the release — `cargo publish -p strategy-ci-core` —
+  failed with `no matching package named proof-core found`, and with it every
+  job gated behind it, up to and including the GitHub release. Nothing in CI
+  could see this: CI builds from git, and the publish path only ever runs on a
+  tag.
+
+- **The engine under test was 130 commits stale.** `wickra-backtest-core` was
+  consumed as a git dependency, whose lockfile rev sat at 26 July — five
+  releases (0.1.0 → 0.1.4) behind the engine a user of this crate resolves,
+  because the manifest declared `version = "0.1"` alongside the git source. So
+  the goldens were blessed against one engine and shipped against another. A git
+  rev never goes red; it only gets older. Every Wickra dependency now comes from
+  crates.io at an exact patch (`0.1.4`), and the goldens are re-verified against
+  it byte-for-byte. `deny.toml` no longer exempts the org from
+  `unknown-git = "deny"`, so a git source coming back fails the build instead of
+  ageing quietly.
+
+### Removed
+
+- **The optional `proof` feature**, and with it the `report_hash` field and its
+  per-request flag. It hashed a report through `wickra-proof`'s `proof-core`,
+  which has no crates.io release — that is what made this crate unpublishable.
+  The feature was always a ROADMAP *Next* item rather than a 0.1 promise, and it
+  is restored the moment wickra-proof ships. Removing it changes no bytes on the
+  wire: the field was `skip_serializing_if = "Option::is_none"` and the default
+  build never populated it, so every golden is unchanged. The guard test that
+  the JSON boundary carries no build-dependent field stays, because the rule it
+  protects outlives the field that broke it.
+
 - **A build flag changed the wire format.** With the `proof` feature compiled in,
   every response carried a `report_hash`, so a library built with
   `--all-features` failed every binding's golden comparison against a corpus
