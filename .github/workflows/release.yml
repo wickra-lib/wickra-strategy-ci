@@ -1012,13 +1012,26 @@ jobs:
           # Drop the template's own HTML comment header (it documents the
           # template, not the release), then substitute only TAG and VERSION so
           # any other shell-looking text passes through untouched.
+          #
+          # The single quotes are the point: envsubst takes the literal *names*
+          # of the only two variables it may expand. Expand them in the shell
+          # and it is handed the values, substitutes nothing, and the template
+          # ships with its placeholders intact.
+          # shellcheck disable=SC2016
           sed '/^<!--/,/^-->/d' .github/release-notes.md \
             | envsubst '${TAG} ${VERSION}' > release-notes.md
           # A template that still carries an unsubstituted placeholder would ship
           # "${TAG}" verbatim into the published notes.
-          if grep -q '\${' release-notes.md; then
+          #
+          # The pattern is a literal '${', named once here so the searches below
+          # can quote it normally. Let the shell expand it instead and both greps
+          # would look for the empty string, match every line, and turn this
+          # guard into an unconditional failure.
+          # shellcheck disable=SC2016
+          placeholder='\${'
+          if grep -q "$placeholder" release-notes.md; then
             echo "::error::release-notes.md still contains an unsubstituted placeholder:"
-            grep -n '\${' release-notes.md
+            grep -n "$placeholder" release-notes.md
             exit 1
           fi
           head -1 release-notes.md
