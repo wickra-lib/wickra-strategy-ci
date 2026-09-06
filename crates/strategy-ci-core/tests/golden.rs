@@ -7,23 +7,13 @@ mod common;
 
 use std::fs;
 
-use strategy_ci_core::{run_suite, run_test, SuiteResult, TestResult};
-
-/// Clear the optional `report_hash` on every result so the comparison is
-/// independent of the `proof` feature — the bindings and the default build never
-/// emit it, and the goldens are pinned without it.
-fn strip_hashes(mut suite: SuiteResult) -> SuiteResult {
-    for r in &mut suite.results {
-        r.report_hash = None;
-    }
-    suite
-}
+use strategy_ci_core::{run_suite, run_test, TestResult};
 
 #[test]
 fn whole_suite_matches_golden_bytes() {
     let tests = common::load_tests();
     let data = common::load_data();
-    let suite = strip_hashes(run_suite(&tests, &data).expect("run suite"));
+    let suite = run_suite(&tests, &data).expect("run suite");
 
     let path = common::golden_dir().join("expected").join("suite.json");
     let want = fs::read_to_string(&path).expect("read suite.json");
@@ -49,17 +39,13 @@ fn suite_matches_expected_bytes() {
     assert_eq!(suite.passed, tests.len());
 
     // Each per-test TestResult equals its pinned golden/expected/<id>.json,
-    // compared as the exact serde bytes the bindings also emit. The optional
-    // `proof` feature adds a `report_hash` the default (binding) build never
-    // emits, so it is cleared before the byte-comparison.
+    // compared as the exact serde bytes the bindings also emit.
     let expected_dir = common::golden_dir().join("expected");
     for result in &suite.results {
         let path = expected_dir.join(format!("{}.json", result.id));
         let want =
             fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {}: {e}", path.display()));
-        let mut result = result.clone();
-        result.report_hash = None;
-        let got = serde_json::to_string(&result).expect("serialize result");
+        let got = serde_json::to_string(result).expect("serialize result");
         assert_eq!(
             got,
             want.trim(),
@@ -76,8 +62,7 @@ fn per_test_run_matches_suite() {
     let expected_dir = common::golden_dir().join("expected");
 
     for test in &tests {
-        let mut result: TestResult = run_test(test, &data).expect("run test");
-        result.report_hash = None; // feature-independent (see suite test)
+        let result: TestResult = run_test(test, &data).expect("run test");
         let path = expected_dir.join(format!("{}.json", test.id));
         let want = fs::read_to_string(&path).expect("read expected");
         let got = serde_json::to_string(&result).expect("serialize");

@@ -194,8 +194,6 @@ pub struct TestResult {
     pub property_results: Vec<PropertyResult>,
     /// Empty when there is no fuzz axis or every run stayed clean.
     pub fuzz_failures: Vec<FuzzFailure>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub report_hash: Option<String>,
 }
 
 /// The result of running a whole suite, sorted by test id.
@@ -229,7 +227,6 @@ impl TestResult {
             diff: Vec::new(),
             property_results: Vec::new(),
             fuzz_failures: Vec::new(),
-            report_hash: None,
         }
     }
 }

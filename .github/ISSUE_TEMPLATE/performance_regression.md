@@ -30,7 +30,7 @@ medians, and say how many runs each figure came from.
 - Number of tests:
 - Bars per dataset:
 - Fuzz `runs` per test (if any):
-- Feature flags: `parallel` on / off, `proof` on / off
+- Feature flags: `parallel` on / off
 
 ## How you measured
 

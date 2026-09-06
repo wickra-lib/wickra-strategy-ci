@@ -320,13 +320,14 @@ fn fuzz_axis_runs_and_reports_clean() {
 }
 
 /// The JSON boundary is the cross-language contract, so its output must not
-/// depend on which features the library was compiled with. `proof` used to add a
-/// `report_hash` to every response, which meant a library built with
-/// `--all-features` failed every binding's golden comparison against a corpus
-/// pinned without it. Three separate binding suites hit exactly that.
+/// depend on which features the library was compiled with. An optional `proof`
+/// feature used to add a `report_hash` to every response, which meant a library
+/// built with `--all-features` failed every binding's golden comparison against
+/// a corpus pinned without it. Three separate binding suites hit exactly that.
 ///
-/// The hash is now opt-in per request. This test passes whether or not `proof`
-/// is enabled, which is the whole point.
+/// The feature is gone until wickra-proof publishes, but the guard stays: it is
+/// the rule that was broken, not the field, and the next optional field would
+/// break it the same way.
 #[test]
 fn the_json_boundary_is_feature_independent() {
     let mut session = Session::new();
@@ -341,27 +342,6 @@ fn the_json_boundary_is_feature_independent() {
     assert!(
         !response.contains("report_hash"),
         "the default response must not carry a build-dependent field: {response}"
-    );
-}
-
-/// And a caller that wants the hash asks for it. Without the `proof` feature
-/// there is nothing to give, so the field stays absent either way — the request
-/// is honoured, not the build.
-#[test]
-fn the_report_hash_is_opt_in_per_request() {
-    let mut session = Session::new();
-    let data = data();
-    let test = base_test();
-    let envelope = serde_json::json!({
-        "cmd": "run_test", "test": test, "data": data, "report_hash": true,
-    });
-    let response = session
-        .command_json(&envelope.to_string())
-        .expect("command runs");
-    assert_eq!(
-        response.contains("report_hash"),
-        cfg!(feature = "proof"),
-        "asking for the hash must give it exactly when the build can: {response}"
     );
 }
 
