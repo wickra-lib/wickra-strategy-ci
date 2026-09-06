@@ -36,7 +36,10 @@ wildcards = "deny"
 unknown-registry = "deny"
 unknown-git = "deny"
 
-# The exchange facade is consumed as a git dependency until its first crates.io
-# release; it lives under the project's own GitHub org.
-[sources.allow-org]
-github = ["wickra-lib"]
+# There is deliberately no [sources.allow-org] exemption. Every dependency,
+# Wickra's own included, comes from crates.io at an exact version. A git source
+# cannot be published -- `cargo publish` resolves optional dependencies too --
+# and it ages silently: a rev never goes red, it only gets older, which is how
+# this workspace ended up testing against an engine 130 commits and five
+# releases behind the one its users would resolve. With no exemption here,
+# `unknown-git = "deny"` fails the build the moment one comes back.

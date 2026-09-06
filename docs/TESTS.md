@@ -71,18 +71,11 @@ spec the engine rejects — is a failing `TestResult` carrying the reason in
 `error`, not a failure of the whole call. A suite reports on every test it was
 given; one broken file does not hide the verdict on the rest.
 
-### Asking for the report hash
-
-`run_test` and `run_suite` accept an optional `report_hash: true`. With the
-`proof` feature compiled in, each result then carries a deterministic BLAKE3
-hash of its report; without it there is nothing to give and the field stays
-absent.
-
-It is opt-in **per request rather than per build** on purpose. This boundary is
-the cross-language contract — the claim is that the same command produces the
-same bytes in ten languages — and a field that appears or vanishes depending on
-how the library was compiled is not a stable contract. So the default response
-never carries the hash, whatever the build.
+The response shape does not depend on how the library was compiled. This
+boundary is the cross-language contract — the claim is that the same command
+produces the same bytes in ten languages — so no build flag may add or remove a
+field. A verifiable report hash is a roadmap item; when it arrives it will be
+opt-in per request, for that reason.
 
 ## Blessing
 
