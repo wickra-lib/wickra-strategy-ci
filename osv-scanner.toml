@@ -3,4 +3,22 @@
 # assessed as not affecting wickra-strategy-ci; this mirrors the cargo-deny
 # `ignore` list in deny.toml at the OSV layer.
 #
-# Keep in lock-step with deny.toml's [advisories].ignore. No suppressions yet.
+# Keep in lock-step with deny.toml's [advisories].ignore.
+
+# pytest tmpdir handling (CVSS 6.8, fixed in pytest 9.0.3) -- pytest through
+# 9.0.2 on UNIX uses predictable /tmp/pytest-of-{user} directories, which a
+# *second local user on the same machine* can abuse for denial of service or
+# possibly privilege escalation. Two reasons that does not apply here. pytest is
+# a test dependency: it lives in .github/requirements/ and is never in a
+# published wheel, so no user of this project ever runs it. And it runs only on
+# GitHub-hosted runners, each a fresh single-user VM with no second local user
+# to exploit it.
+#
+# It cannot simply be upgraded either: pytest 9 requires Python >= 3.10, and
+# ci-dev.txt is compiled for 3.9 because the matrix tests that row. Removing the
+# exposure means dropping Python 3.9 support, which is a decision about who can
+# install this package, not about this advisory. It resolves itself when 3.9
+# goes.
+[[IgnoredVulns]]
+id = "GHSA-6w46-j5rx-g56g"
+reason = "pytest is a CI-only test dependency, never shipped; the flaw needs a second local user, which a single-user ephemeral runner does not have. Pinned at 8.4.2 because pytest 9 requires Python >= 3.10 and the 3.9 matrix row needs it."
