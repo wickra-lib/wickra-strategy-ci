@@ -12,14 +12,12 @@ boundaries.
 
 ## Supported versions
 
-This project is pre-release: no version has shipped to a registry yet. Security
-fixes target the `main` branch, and will target the most recent published version
-once `0.1.0` is released.
+Security fixes target the `main` branch and the most recent published version.
 
 | Version | Supported |
 |---------|-----------|
 | `main` | ✅ |
-| `0.1.0` (unreleased) | ✅ |
+| `0.1.0` | ✅ |
 
 ## Reporting a vulnerability
 

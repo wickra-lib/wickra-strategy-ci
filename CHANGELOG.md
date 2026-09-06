@@ -6,6 +6,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-07
+
 ### Fixed
 
 - **The crate could not be published at all.** `strategy-ci-core` declared
@@ -406,4 +408,5 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   supply-chain and link config (`deny.toml`, `lychee.toml`, `osv-scanner.toml`,
   `repo-metadata.toml`), and the governance and community docs.
 
-[Unreleased]: https://github.com/wickra-lib/wickra-strategy-ci/commits/main
+[Unreleased]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/wickra-lib/wickra-strategy-ci/releases/tag/v0.1.0
