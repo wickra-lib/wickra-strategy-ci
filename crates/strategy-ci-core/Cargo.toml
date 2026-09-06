@@ -12,9 +12,9 @@ readme.workspace = true
 keywords.workspace = true
 categories.workspace = true
 
-# docs.rs builds with every feature on, so the optional `proof` API and the
-# rayon-backed `parallel` path appear in the rendered documentation rather
-# than being invisible to anyone reading it.
+# docs.rs builds with every feature on, so the rayon-backed `parallel` path
+# appears in the rendered documentation rather than being invisible to anyone
+# reading it.
 [package.metadata.docs.rs]
 all-features = true
 
@@ -24,11 +24,15 @@ workspace = true
 [features]
 # `parallel` runs a suite's tests concurrently with rayon; it is on by default.
 # The wasm binding builds with --no-default-features for a sequential run that is
-# byte-identical to the parallel one. `proof` surfaces a deterministic report hash
-# (from the wickra-proof core) in each TestResult.
+# byte-identical to the parallel one.
+#
+# There is deliberately no `proof` feature yet. The verifiable report hash is a
+# ROADMAP "Next" item and it needs wickra-proof's `proof-core`, which has no
+# crates.io release -- declaring the dependency, even as an optional one, makes
+# this crate unpublishable, because `cargo publish` resolves optional
+# dependencies too. It returns when that crate ships.
 default = ["parallel"]
 parallel = ["dep:rayon"]
-proof = ["dep:proof-core", "dep:blake3"]
 
 [dependencies]
 # The backtest engine under test: strategy-ci forwards the opaque StrategySpec
@@ -42,9 +46,6 @@ rand.workspace = true
 rand_pcg.workspace = true
 # Data-parallel suite execution; optional (the `parallel` feature).
 rayon = { workspace = true, optional = true }
-# Optional verifiable report hash; optional (the `proof` feature).
-proof-core = { workspace = true, optional = true }
-blake3 = { workspace = true, optional = true }
 
 [dev-dependencies]
 proptest.workspace = true
