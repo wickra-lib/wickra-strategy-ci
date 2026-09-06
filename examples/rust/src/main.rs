@@ -10,7 +10,7 @@
 use std::collections::BTreeMap;
 
 use serde_json::json;
-use strategy_ci_core::{bless, run_test, Candle, StrategyTest};
+use wickra_strategy_ci_core::{bless, run_test, Candle, StrategyTest};
 
 const SYMBOL: &str = "AAA";
 
@@ -61,7 +61,7 @@ fn main() {
     let mut data = BTreeMap::new();
     data.insert(SYMBOL.to_string(), candles());
 
-    println!("wickra-strategy-ci {}", strategy_ci_core::VERSION);
+    println!("wickra-strategy-ci {}", wickra_strategy_ci_core::VERSION);
 
     // Bless the golden, then re-run: a freshly-blessed test passes cleanly.
     let blessed = bless(&test_doc(), &data).expect("bless");

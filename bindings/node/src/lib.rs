@@ -8,14 +8,14 @@ use napi_derive::napi;
 
 /// A stateless strategy-test session. Tests and data are passed with each command.
 #[napi]
-pub struct Session(strategy_ci_core::Session);
+pub struct Session(wickra_strategy_ci_core::Session);
 
 #[napi]
 impl Session {
     #[napi(constructor)]
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        Session(strategy_ci_core::Session::new())
+        Session(wickra_strategy_ci_core::Session::new())
     }
 
     /// Run a command envelope (`{"cmd":"...", ...}`) and return the response JSON.
@@ -30,6 +30,6 @@ impl Session {
     /// The crate version.
     #[napi]
     pub fn version(&self) -> &'static str {
-        strategy_ci_core::VERSION
+        wickra_strategy_ci_core::VERSION
     }
 }

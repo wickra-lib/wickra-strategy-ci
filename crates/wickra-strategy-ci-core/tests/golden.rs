@@ -7,7 +7,7 @@ mod common;
 
 use std::fs;
 
-use strategy_ci_core::{run_suite, run_test, TestResult};
+use wickra_strategy_ci_core::{run_suite, run_test, TestResult};
 
 #[test]
 fn whole_suite_matches_golden_bytes() {

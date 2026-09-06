@@ -6,6 +6,40 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-07
+
+### Changed
+
+- **The two published crates are renamed to the names the rest of the org
+  uses.** `strategy-ci-core` becomes `wickra-strategy-ci-core`, and the CLI
+  package `wickra-strategy-ci` becomes `wickra-strategy-ci-cli`.
+
+  Every other product repository publishes `wickra-<product>-core` and
+  `wickra-<product>-cli` -- wickra-benchmark ships exactly those two and no bare
+  `wickra-benchmark` at all -- and `.github`'s `repos.mjs` already pointed this
+  repository's crates.io badge at `wickra-strategy-ci-cli`, a crate that did not
+  exist. `strategy-ci-core` was the only core crate in the organisation without
+  the `wickra-` prefix.
+
+  **Nothing a user types changes.** The binary keeps the bare name
+  `wickra-strategy-ci`, the same way `wickra-benchmark-cli` ships a binary
+  called `wickra-benchmark`, so the CLI, the GitHub Action and every documented
+  command are untouched. The Rust library is now `cargo add
+  wickra-strategy-ci-core`. The PyPI, npm, NuGet, Maven and R package names are
+  unaffected -- they never carried the crate name.
+
+  The crate directories move with the packages, so `crates/` and the manifests
+  agree again.
+
+### Fixed
+
+- **Documented action pins now move with the release.** `docs/GITHUB_ACTION.md`
+  told readers to pin `@v0.1.0` in two snippets while README had moved on,
+  because the version tooling treated `README.md` as a place a version lives and
+  `docs/` as not one. A stale pin in the documentation is worse than a stale one
+  in a manifest: a reader copies it.
+
+
 ## [0.1.0] - 2026-09-07
 
 ### Fixed
@@ -408,5 +442,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   supply-chain and link config (`deny.toml`, `lychee.toml`, `osv-scanner.toml`,
   `repo-metadata.toml`), and the governance and community docs.
 
-[Unreleased]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/wickra-lib/wickra-strategy-ci/releases/tag/v0.1.0

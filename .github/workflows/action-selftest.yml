@@ -27,7 +27,7 @@ jobs:
       - name: Build and install the CLI from source
         shell: bash
         run: |
-          cargo install --path crates/strategy-ci-cli --root "${HOME}/.wickra" --locked
+          cargo install --path crates/wickra-strategy-ci-cli --root "${HOME}/.wickra" --locked
           echo "${HOME}/.wickra/bin" >> "${GITHUB_PATH}"
       - id: run
         uses: ./
@@ -55,7 +55,7 @@ jobs:
       - name: Build and install the CLI from source
         shell: bash
         run: |
-          cargo install --path crates/strategy-ci-cli --root "${HOME}/.wickra" --locked
+          cargo install --path crates/wickra-strategy-ci-cli --root "${HOME}/.wickra" --locked
           echo "${HOME}/.wickra/bin" >> "${GITHUB_PATH}"
       # Corrupt one golden's pinned report so the diff must fail.
       - name: Break a golden

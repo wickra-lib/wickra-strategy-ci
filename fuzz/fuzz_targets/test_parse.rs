@@ -5,7 +5,7 @@
 //! (serde round-trip stability).
 
 use libfuzzer_sys::fuzz_target;
-use strategy_ci_core::StrategyTest;
+use wickra_strategy_ci_core::StrategyTest;
 
 fuzz_target!(|data: &[u8]| {
     let Ok(text) = std::str::from_utf8(data) else {

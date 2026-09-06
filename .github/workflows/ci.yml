@@ -146,13 +146,13 @@ jobs:
         uses: taiki-e/install-action@742a3317eac7bd62f91cd888b4eead5e784ba833 # v2.87.1
         with:
           tool: cargo-llvm-cov
-      # The moat lives in strategy-ci-core: the runner (golden diff + tolerances +
+      # The moat lives in wickra-strategy-ci-core: the runner (golden diff + tolerances +
       # properties + fuzz). Measure it in isolation so patch coverage tracks the
       # core.
       - name: Generate coverage (lcov)
         run: >
           cargo llvm-cov
-          -p strategy-ci-core --all-features
+          -p wickra-strategy-ci-core --all-features
           --lcov --output-path lcov.info
       - name: Upload to Codecov
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
@@ -208,7 +208,7 @@ jobs:
   # release does, in both containers, so that gap is not blind.
   #
   # No vendored TLS and no perl here, unlike the indicator library: the binding
-  # depends on strategy-ci-core alone, which does JSON and arithmetic and opens
+  # depends on wickra-strategy-ci-core alone, which does JSON and arithmetic and opens
   # no sockets. That is a claim worth testing rather than asserting, which is
   # what this job does.
   python-wheel-container-smoke:
@@ -302,7 +302,7 @@ jobs:
         run: |
           set -euo pipefail
           packages=()
-          for pkg in strategy-ci-core wickra-strategy-ci; do
+          for pkg in wickra-strategy-ci-core wickra-strategy-ci; do
             # crates.io answers 403 to a request without a User-Agent, so send
             # one: an unauthenticated 403 must not be mistaken for "unpublished".
             code=$(curl -sS -o /dev/null -w '%{http_code}'                      -A 'wickra-strategy-ci CI (+https://github.com/wickra-lib/wickra-strategy-ci)'                      "https://crates.io/api/v1/crates/${pkg}")

@@ -6,7 +6,7 @@
 
 mod common;
 
-use strategy_ci_core::{run_suite, run_test};
+use wickra_strategy_ci_core::{run_suite, run_test};
 
 #[test]
 fn run_suite_is_deterministic() {

@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::PathBuf;
 
-use strategy_ci_core::{Candle, StrategyTest};
+use wickra_strategy_ci_core::{Candle, StrategyTest};
 
 /// The repo-root `golden/` directory, resolved from this crate's manifest dir.
 #[must_use]

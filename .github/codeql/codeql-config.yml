@@ -1,7 +1,7 @@
 # CodeQL analysis configuration, referenced from .github/workflows/codeql.yml.
 #
 # `bindings/node/src/lib.rs` is excluded from analysis. The file is a thin
-# napi-derive wrapper over strategy-ci-core: the `Session` class and its
+# napi-derive wrapper over wickra-strategy-ci-core: the `Session` class and its
 # `command` / `version` methods, each a one-line delegation.
 #
 # napi-derive expands every `#[napi]` into FFI glue that dereferences raw

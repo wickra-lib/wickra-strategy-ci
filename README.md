@@ -8,7 +8,7 @@
 [![CodeQL](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/codeql.svg)](https://github.com/wickra-lib/wickra-strategy-ci/actions/workflows/codeql.yml)
 [![codecov](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/codecov.svg)](https://codecov.io/gh/wickra-lib/wickra-strategy-ci)
 [![GitHub release](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/release.svg)](https://github.com/wickra-lib/wickra-strategy-ci/releases/latest)
-[![crates.io](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/crates.svg)](https://crates.io/crates/wickra-strategy-ci)
+[![crates.io](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/crates.svg)](https://crates.io/crates/wickra-strategy-ci-cli)
 [![PyPI](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/pypi.svg)](https://pypi.org/project/wickra-strategy-ci/)
 [![npm](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/npm.svg)](https://www.npmjs.com/package/wickra-strategy-ci)
 [![NuGet](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/nuget.svg)](https://www.nuget.org/packages/Wickra.StrategyCi)
@@ -99,7 +99,7 @@ wickra-strategy-ci bless tests/ --data data/    # re-pin after an intended chang
 Run your strategy tests on every push — a failing test fails the workflow:
 
 ```yaml
-- uses: wickra-lib/wickra-strategy-ci@v0.1.0
+- uses: wickra-lib/wickra-strategy-ci@v0.1.1
   with:
     tests: tests/
     data: data/
@@ -118,7 +118,7 @@ Node.js and WASM natively, plus C, C++, C#, Go, Java and R over the C ABI hub. A
 the same test JSON produces a byte-identical result in every binding.
 
 ```bash
-cargo add wickra-strategy-ci           # Rust
+cargo add wickra-strategy-ci-core      # Rust
 pip install wickra-strategy-ci         # Python
 npm install wickra-strategy-ci         # Node.js
 dotnet add package Wickra.StrategyCi   # C#
@@ -183,8 +183,8 @@ need their own toolchain (`maturin`, `napi`, `wasm-pack`, `dotnet`, `go`, Maven,
 ## Project layout
 
 ```
-crates/strategy-ci-core     the runner: model, tolerances, properties, fuzz, session
-crates/strategy-ci-cli      the reference CLI (run / bless / list / version)
+crates/wickra-strategy-ci-core     the runner: model, tolerances, properties, fuzz, session
+crates/wickra-strategy-ci-cli      the reference CLI (run / bless / list / version)
 crates/strategy-ci-bench    criterion benchmarks
 bindings/c                  the C ABI hub — every non-native binding goes through it
 bindings/python             PyO3 native binding

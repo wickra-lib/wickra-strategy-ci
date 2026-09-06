@@ -1,7 +1,7 @@
 # Wickra Strategy-CI — C ABI
 
 The C ABI is the hub every C-capable language (C, C++, C#, Go, Java, R) links
-against. It exposes `strategy-ci-core` as a tiny, JSON-shaped surface built as
+against. It exposes `wickra-strategy-ci-core` as a tiny, JSON-shaped surface built as
 both a `cdylib` (dynamic library) and a `staticlib`.
 
 ## Surface
@@ -60,7 +60,7 @@ The generated header is committed and must not be edited by hand.
 ## Determinism
 
 The response is byte-identical to every other Wickra Strategy-CI binding and to
-the reference CLI, because the whole test runner lives once in `strategy-ci-core`
+the reference CLI, because the whole test runner lives once in `wickra-strategy-ci-core`
 and each binding forwards its JSON verbatim.
 
 ## Safety

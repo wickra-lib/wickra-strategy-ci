@@ -1,5 +1,5 @@
 [package]
-name = "wickra-strategy-ci"
+name = "wickra-strategy-ci-cli"
 description = "Reference CLI for Wickra Strategy-CI: run golden/property/fuzz tests for trading strategies and gate CI on the result."
 version.workspace = true
 edition.workspace = true
@@ -26,6 +26,6 @@ name = "wickra-strategy-ci"
 path = "src/main.rs"
 
 [dependencies]
-strategy-ci-core.workspace = true
+wickra-strategy-ci-core.workspace = true
 serde_json.workspace = true
 clap.workspace = true

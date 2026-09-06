@@ -8,7 +8,7 @@ use std::collections::BTreeMap;
 
 use libfuzzer_sys::fuzz_target;
 use serde_json::json;
-use strategy_ci_core::{run_test, Candle, StrategyTest};
+use wickra_strategy_ci_core::{run_test, Candle, StrategyTest};
 
 fuzz_target!(|data: &[u8]| {
     // Need a few bars for the slow SMA to warm up; bound the series length.

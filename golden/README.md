@@ -48,7 +48,7 @@ ts(i)    = 1_700_000_000 + i * 3600
 2. **Runner golden** — writes each `expected/<id>.json` `TestResult`:
 
    ```bash
-   cargo test -p strategy-ci-core golden -- --ignored --nocapture
+   cargo test -p wickra-strategy-ci-core golden -- --ignored --nocapture
    ```
 
 Both outputs are byte-exact and reproducible; a diff in CI means the engine's

@@ -8,7 +8,7 @@ use std::collections::BTreeMap;
 
 use libfuzzer_sys::fuzz_target;
 use serde_json::Value;
-use strategy_ci_core::{diff_reports, Tolerance};
+use wickra_strategy_ci_core::{diff_reports, Tolerance};
 
 fuzz_target!(|data: &[u8]| {
     let Ok(text) = std::str::from_utf8(data) else {
