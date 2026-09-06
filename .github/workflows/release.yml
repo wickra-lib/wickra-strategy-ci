@@ -1008,27 +1008,30 @@ jobs:
           VERSION: ${{ steps.tag.outputs.version }}
         shell: bash
         run: |
-          # shellcheck disable=SC2016
-          # SC2016 ("expressions don't expand in single quotes") is wrong here
-          # three times over, and the directive sits at the top of the script
-          # because all three are below it. The single quotes are the point:
-          # envsubst is handed the literal *names* of the only two variables it
-          # may expand, and the greps look for a literal '${' left behind in the
-          # rendered notes. Let the shell expand either and the step substitutes
-          # nothing and then finds nothing -- it would go green while shipping
-          # "${TAG}" verbatim into the published release notes, which is the
-          # exact failure the grep exists to catch.
           set -euo pipefail
           # Drop the template's own HTML comment header (it documents the
           # template, not the release), then substitute only TAG and VERSION so
           # any other shell-looking text passes through untouched.
+          #
+          # The single quotes are the point: envsubst takes the literal *names*
+          # of the only two variables it may expand. Expand them in the shell
+          # and it is handed the values, substitutes nothing, and the template
+          # ships with its placeholders intact.
+          # shellcheck disable=SC2016
           sed '/^<!--/,/^-->/d' .github/release-notes.md \
             | envsubst '${TAG} ${VERSION}' > release-notes.md
           # A template that still carries an unsubstituted placeholder would ship
           # "${TAG}" verbatim into the published notes.
-          if grep -q '\${' release-notes.md; then
+          #
+          # The pattern is a literal '${', named once here so the searches below
+          # can quote it normally. Let the shell expand it instead and both greps
+          # would look for the empty string, match every line, and turn this
+          # guard into an unconditional failure.
+          # shellcheck disable=SC2016
+          placeholder='\${'
+          if grep -q "$placeholder" release-notes.md; then
             echo "::error::release-notes.md still contains an unsubstituted placeholder:"
-            grep -n '\${' release-notes.md
+            grep -n "$placeholder" release-notes.md
             exit 1
           fi
           head -1 release-notes.md
