@@ -1,7 +1,7 @@
 Package: wickrastrategyci
 Type: Package
 Title: Test Trading Strategies in CI
-Version: 0.1.1
+Version: 0.1.2
 Authors@R: person("kingchenc", role = c("aut", "cre"), email = "support@wickra.org")
 Description: R bindings for wickra-strategy-ci over its C ABI hub: create a
     Session, golden-pin a strategy's backtest report, assert tolerances and
