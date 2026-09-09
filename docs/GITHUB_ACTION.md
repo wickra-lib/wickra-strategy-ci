@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: wickra-lib/wickra-strategy-ci@v0.1.1
+      - uses: wickra-lib/wickra-strategy-ci@v0.1.2
         with:
           tests: tests          # a StrategyTest file or a directory of them
           data: data            # a directory of <SYMBOL>.csv OHLCV files
@@ -50,14 +50,14 @@ Consume it in a later step:
 
 ```yaml
       - id: sci
-        uses: wickra-lib/wickra-strategy-ci@v0.1.1
+        uses: wickra-lib/wickra-strategy-ci@v0.1.2
         with: { tests: tests, data: data, format: json }
       - run: echo '${{ steps.sci.outputs.result }}' | jq '.failed'
 ```
 
 ## Versioning
 
-Pin an exact release (`@v0.1.0`). A moving major tag is advanced to each release
+Pin an exact release (`@v0.1.2`). A moving major tag is advanced to each release
 under that major, so the tag for a `v0.1.0` release is **`v0`** — not `v1`.
 
 Pre-1.0 that distinction matters: semantic versioning lets a `0.x` minor bump
