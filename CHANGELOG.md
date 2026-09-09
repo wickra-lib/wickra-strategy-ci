@@ -28,6 +28,19 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `@${TAG}`, the exact release being published -- the pin the documentation
   recommends, and one that stays correct after 1.0.
 
+- **The two R jobs on Linux could be taken down by a CDN they never used.**
+  `r-lib/actions/setup-r` runs `apt-get update` before installing R, and apt
+  exits non-zero when *any* configured source fails -- not only the ones being
+  read. The runner image carries a source for Google's Chrome CDN; when its
+  index went stale there, apt reported `Hash Sum mismatch` and the R install
+  died with `sudo` exit code 100, failing both `Examples build` and `R on
+  ubuntu-latest` while the other 63 checks passed. Both jobs now drop that
+  source before calling `setup-r`. It is matched by content rather than by
+  filename, so it is found whether the image writes `google-chrome.list` or a
+  deb822 `google-chrome.sources`, and the step is a no-op on an image that
+  carries neither. Guarded on Linux: the macOS and Windows legs of the R
+  matrix never invoke apt.
+
 ## [0.1.1] - 2026-09-07
 
 ### Changed
