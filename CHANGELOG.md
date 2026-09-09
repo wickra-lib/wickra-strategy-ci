@@ -43,6 +43,19 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   carries neither. Guarded on Linux: the macOS and Windows legs of the R
   matrix never invoke apt.
 
+- **A commit that ran CI twice could never be released.** The publish gate
+  reads the check runs on the tagged commit and refuses to publish if any
+  reports `failure`, `timed_out` or `cancelled`. But `ci.yml` carries
+  `concurrency: cancel-in-progress`, so a commit that receives two push
+  events -- a re-push, a duplicate delivery, a manual re-run -- has its first
+  run cancelled by its second, and those cancelled check runs stay attached to
+  the commit permanently. The gate could not tell "superseded by a newer run
+  of the same workflow" from "genuinely failed", so the commit was blocked for
+  good however green the surviving run was. This release hit it: 51 superseded
+  check runs against a CI run whose 52 jobs all passed. The gate now resolves
+  each check name to its newest run before judging it. Nothing is hidden -- a
+  check whose only run was cancelled still reports cancelled.
+
 ## [0.1.1] - 2026-09-07
 
 ### Changed

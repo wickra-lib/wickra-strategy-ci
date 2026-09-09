@@ -84,10 +84,27 @@ jobs:
           while :; do
             # Exclude this workflow's own checks; they cannot be finished while
             # this step is what is running.
+            #
+            # Only the newest run of each check name counts. ci.yml carries
+            # `concurrency: cancel-in-progress`, so a commit that receives two
+            # push events -- a re-push, a duplicate delivery, a manual re-run --
+            # has its first run cancelled by its second. Those cancelled check
+            # runs stay attached to the commit for good, and `cancelled` is read
+            # as a failure three lines down, so without this the commit could
+            # never be released however green the surviving run was. v0.1.2 hit
+            # exactly that: 51 superseded check runs, zero real failures.
+            #
+            # Grouping by name and keeping the highest id (they are monotonic)
+            # resolves each check to its latest run and hides nothing: a check
+            # whose only run was cancelled still reports cancelled.
+            #
+            # --slurp cannot be combined with --jq, so jq runs in the pipe.
             states=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/check-runs" \
-                       --paginate --jq '.check_runs[]
-                         | select(.name | test("Release|gate|Attest|Publish|Mirror") | not)
-                         | "\(.status) \(.conclusion)"' || true)
+                       --paginate --slurp \
+                     | jq -r '[.[].check_runs[]]
+                         | map(select(.name | test("Release|gate|Attest|Publish|Mirror") | not))
+                         | group_by(.name) | map(max_by(.id))
+                         | .[] | "\(.status) \(.conclusion)"' || true)
             if [ -z "${states}" ]; then
               echo "::notice::no other check runs on ${GITHUB_SHA}; nothing to wait for."
               break
