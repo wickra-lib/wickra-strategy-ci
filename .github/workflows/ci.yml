@@ -401,6 +401,27 @@ jobs:
       - name: Java example
         run: javac -d examples/java/out -cp bindings/java/src/main/java examples/java/Run.java
 
+      # r-lib/actions/setup-r runs `apt-get update` before installing R, and apt
+      # exits non-zero when *any* configured source fails. The runner image
+      # carries a source for Google's Chrome CDN that nothing here needs; when
+      # its index is stale there, apt reports
+      #   E: Failed to fetch .../chrome-stable/... Hash Sum mismatch
+      # and the R install dies with `sudo` exit code 100 -- which is how this
+      # job and "R on ubuntu-latest" both failed. Matched by content rather than
+      # filename: the image writes it as google-chrome.list or as a deb822
+      # google-chrome.sources depending on the release.
+      - name: Drop the apt source for Google's CDN
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=$(grep -rl 'dl\.google\.com' /etc/apt/sources.list.d/ 2>/dev/null || true)
+          if [ -z "$files" ]; then
+            echo "no Google apt source on this image"
+            exit 0
+          fi
+          echo "$files"
+          echo "$files" | xargs -r sudo rm -f
       - uses: r-lib/actions/setup-r@465b7d8e732ca3921382b1674c59bada9cbf3399 # v2.13.0
         with:
           r-version: "release"
@@ -670,6 +691,22 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Build the C ABI library
         run: cargo build -p wickra-strategy-ci-c --release
+      # Same runner-image defect as in the examples job above: setup-r's
+      # `apt-get update` fails on Google's stale Chrome index and takes the R
+      # install with it. Linux only -- the macOS and Windows legs of this matrix
+      # never touch apt.
+      - name: Drop the apt source for Google's CDN
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=$(grep -rl 'dl\.google\.com' /etc/apt/sources.list.d/ 2>/dev/null || true)
+          if [ -z "$files" ]; then
+            echo "no Google apt source on this image"
+            exit 0
+          fi
+          echo "$files"
+          echo "$files" | xargs -r sudo rm -f
       - uses: r-lib/actions/setup-r@465b7d8e732ca3921382b1674c59bada9cbf3399 # v2.13.0
         with:
           r-version: "release"
