@@ -1176,7 +1176,15 @@ jobs:
 
           # PATCH moves an existing ref; the first release of a major has none
           # yet, so a 404 there means create it rather than fail.
-          if gh api "repos/${GITHUB_REPOSITORY}/git/refs/${ref}" --silent 2>/dev/null; then
+          #
+          # The probe has to be the singular `git/ref/<ref>`, which matches
+          # exactly. The plural `git/refs/<ref>` is a prefix search: with
+          # v0.1.0 and v0.1.1 published it answers 200 and a two-element list
+          # for the prefix `tags/v0`. That reads here as "the tag exists", so
+          # the PATCH below runs against a ref that was never created and the
+          # job dies with 422 Reference does not exist -- which is exactly how
+          # the v0.1.1 release failed.
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/${ref}" --silent 2>/dev/null; then
             gh api -X PATCH "repos/${GITHUB_REPOSITORY}/git/refs/${ref}" \
               -f sha="${GITHUB_SHA}" -F force=true --silent
             echo "::notice::moved ${major} to ${GITHUB_SHA}"

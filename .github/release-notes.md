@@ -26,7 +26,7 @@ go get github.com/wickra-lib/wickra-strategy-ci/bindings/go
 GitHub Action:
 
 ```yaml
-- uses: wickra-lib/wickra-strategy-ci@v1
+- uses: wickra-lib/wickra-strategy-ci@${TAG}
   with: { tests: tests, data: data }
 ```
 

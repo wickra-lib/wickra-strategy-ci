@@ -6,6 +6,28 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- **The `v0.1.1` release never published its moving major tag.** The
+  `major-tag` job asked whether `refs/tags/v0` existed with
+  `GET /git/refs/tags/v0` -- the plural endpoint, which is a prefix search.
+  With `v0.1.0` and `v0.1.1` published it answers `200` and a two-element
+  list, so the job read that as "the tag is there", took the move branch, and
+  `PATCH`ed a ref that had never been created: `422 Reference does not
+  exist`. Every other job in that run succeeded, so the release published in
+  full and only the tag was missing. The probe is now the singular
+  `GET /git/ref/tags/v0`, which matches exactly and answers `404` when the tag
+  is absent, so the first release of a major line creates the tag instead of
+  failing on it.
+
+- **The release notes advertised a tag that cannot exist.** The published
+  `v0.1.1` notes told readers to use `wickra-lib/wickra-strategy-ci@v1`. No
+  `v1` exists before 1.0, and the moving major tag for a `0.x` release is
+  `v0`, which `README.md`, `docs/GITHUB_ACTION.md` and `docs/Cookbook.md` all
+  tell readers not to use until 1.0 has shipped. The template now renders
+  `@${TAG}`, the exact release being published -- the pin the documentation
+  recommends, and one that stays correct after 1.0.
+
 ## [0.1.1] - 2026-09-07
 
 ### Changed
