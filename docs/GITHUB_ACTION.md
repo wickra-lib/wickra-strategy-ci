@@ -57,7 +57,7 @@ Consume it in a later step:
 
 ## Versioning
 
-Pin an exact release (`@v0.1.2`). A moving major tag is advanced to each release
+Pin an exact release (`@v0.1.3`). A moving major tag is advanced to each release
 under that major, so the tag for a `v0.1.0` release is **`v0`** — not `v1`.
 
 Pre-1.0 that distinction matters: semantic versioning lets a `0.x` minor bump
