@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "wickra-strategy-ci"
-version = "0.1.2"
+version = "0.1.3"
 description = "Jest for trading strategies: golden-pin the backtest report, catch regressions in CI, property-test against fuzzed data."
 readme = "README.md"
 license = "MIT OR Apache-2.0"

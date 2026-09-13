@@ -24,7 +24,7 @@ members = ["crates/wickra-strategy-ci-core", "crates/wickra-strategy-ci-cli", "c
 exclude = ["fuzz"]
 
 [workspace.package]
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 rust-version = "1.86"
 license = "MIT OR Apache-2.0"
@@ -53,7 +53,7 @@ categories = ["finance", "development-tools::testing"]
 # dependency back would mean two crates defining the same row.
 wickra-backtest-core = "0.1.4"
 # Workspace-internal crate, referenced by the CLI, bench and bindings.
-wickra-strategy-ci-core = { version = "0.1.2", path = "crates/wickra-strategy-ci-core" }
+wickra-strategy-ci-core = { version = "0.1.3", path = "crates/wickra-strategy-ci-core" }
 # Serialization — the data-driven boundary (test/command/result as JSON).
 serde = { version = "1", features = ["derive"] }
 # `float_roundtrip`: serde_json's default float parser is fast but not

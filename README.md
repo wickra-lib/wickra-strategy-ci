@@ -99,7 +99,7 @@ wickra-strategy-ci bless tests/ --data data/    # re-pin after an intended chang
 Run your strategy tests on every push — a failing test fails the workflow:
 
 ```yaml
-- uses: wickra-lib/wickra-strategy-ci@v0.1.2
+- uses: wickra-lib/wickra-strategy-ci@v0.1.3
   with:
     tests: tests/
     data: data/
