@@ -6,6 +6,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- **The R package builds for WebAssembly on r-universe.** `configure`
+  refused the wasm target outright, so the `wasm-release` job was red on every
+  build. The r-universe wasm image ships cargo and emscripten, so `configure`
+  now builds the C ABI staticlib from the release tag's source for
+  `wasm32-unknown-emscripten` right there and links it into the package
+  object, the way wickra and wickra-verify already did.
+- **The exported R functions are documented.** `wkstrategyci_new`, `wkstrategyci_command`
+  and `wkstrategyci_version` carried roxygen comments but no generated `man/` pages,
+  which `R CMD check` reported as a WARNING on every platform.
+
 ## [0.1.2] - 2026-09-09
 
 ### Fixed

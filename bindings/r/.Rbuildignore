@@ -12,3 +12,4 @@
 ^src/Makevars$
 ^\.gitignore$
 ^tests/golden_cross_language\.R$
+^src/libwickra_strategy_ci\.a$
