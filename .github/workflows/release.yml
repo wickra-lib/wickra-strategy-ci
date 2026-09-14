@@ -98,11 +98,18 @@ jobs:
             # resolves each check to its latest run and hides nothing: a check
             # whose only run was cancelled still reports cancelled.
             #
+            # Two more check runs are not this repository's verdict: "Dependabot"
+            # is Dependabot's own security-update attempt, red whenever the update
+            # cannot be applied (a pin, a transitive dependency with no fixed
+            # line) without a single job of ours having failed -- wickra-zk lost
+            # a release to exactly that -- and the link checks marked
+            # non-blocking are advisory by their own name.
+            #
             # --slurp cannot be combined with --jq, so jq runs in the pipe.
             states=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/check-runs" \
                        --paginate --slurp \
                      | jq -r '[.[].check_runs[]]
-                         | map(select(.name | test("Release|gate|Attest|Publish|Mirror") | not))
+                         | map(select(.name | test("Release|gate|Attest|Publish|Mirror|^Dependabot$|non-blocking|advisory") | not))
                          | group_by(.name) | map(max_by(.id))
                          | .[] | "\(.status) \(.conclusion)"' || true)
             if [ -z "${states}" ]; then
