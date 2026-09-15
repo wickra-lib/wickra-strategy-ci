@@ -98,11 +98,18 @@ jobs:
             # resolves each check to its latest run and hides nothing: a check
             # whose only run was cancelled still reports cancelled.
             #
+            # Two more check runs are not this repository's verdict: "Dependabot"
+            # is Dependabot's own security-update attempt, red whenever the update
+            # cannot be applied (a pin, a transitive dependency with no fixed
+            # line) without a single job of ours having failed -- wickra-zk lost
+            # a release to exactly that -- and the link checks marked
+            # non-blocking are advisory by their own name.
+            #
             # --slurp cannot be combined with --jq, so jq runs in the pipe.
             states=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/check-runs" \
                        --paginate --slurp \
                      | jq -r '[.[].check_runs[]]
-                         | map(select(.name | test("Release|gate|Attest|Publish|Mirror") | not))
+                         | map(select(.name | test("Release|gate|Attest|Publish|Mirror|^Dependabot$|non-blocking|advisory") | not))
                          | group_by(.name) | map(max_by(.id))
                          | .[] | "\(.status) \(.conclusion)"' || true)
             if [ -z "${states}" ]; then
@@ -194,7 +201,7 @@ jobs:
 
       # CycloneDX SBOM per published crate.
       - name: Install cargo-cyclonedx
-        uses: taiki-e/install-action@742a3317eac7bd62f91cd888b4eead5e784ba833 # v2.87.1
+        uses: taiki-e/install-action@3f74d7c16a4242f1c95561e98edc25d36adb4375 # v2.87.12
         with:
           tool: cargo-cyclonedx
 
@@ -244,7 +251,24 @@ jobs:
       # The Python binding depends only on wickra-strategy-ci-core (pure canonicalization +
       # hashing, no native networking), so the manylinux/musllinux containers
       # build the wheel with no extra system dependencies.
+      # The container image comes from quay.io, which has failed whole
+      # afternoons (502/504 on the manifest). The first attempt may fail
+      # without failing the row; a pause and one identical retry follow, the
+      # family's retry pair. A second failure is the row's verdict.
       - uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
+        id: wheel
+        continue-on-error: true
+        with:
+          working-directory: bindings/python
+          target: ${{ matrix.target }}
+          args: --release --strip --out dist
+          manylinux: ${{ matrix.manylinux }}
+      - name: Pause before retrying the wheel build
+        if: steps.wheel.outcome == 'failure'
+        shell: bash
+        run: sleep 90
+      - if: steps.wheel.outcome == 'failure'
+        uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
         with:
           working-directory: bindings/python
           target: ${{ matrix.target }}
@@ -512,7 +536,7 @@ jobs:
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Install wasm-pack (latest, via prebuilt binary)
-        uses: taiki-e/install-action@742a3317eac7bd62f91cd888b4eead5e784ba833 # v2.87.1
+        uses: taiki-e/install-action@3f74d7c16a4242f1c95561e98edc25d36adb4375 # v2.87.12
         with:
           tool: wasm-pack
       - name: Build WASM package (bundler target)

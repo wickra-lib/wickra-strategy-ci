@@ -34,7 +34,7 @@ echo "==> Node (bindings/node/package-lock.json)"
 (cd bindings/node && npm install --package-lock-only --no-audit --no-fund)
 
 echo "==> Python (.github/requirements/ci-dev.txt via uv)"
-UV_VERSION="0.12.10"
+UV_VERSION="0.12.13"
 uv_sha256() {
   case "$1" in
     x86_64-unknown-linux-gnu)  echo "173d95a0c32d18c896c46ba6fafbf3cf9c14ab74b033f81b76c883ef492a976b" ;;
