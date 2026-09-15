@@ -15,5 +15,5 @@ NeedsCompilation: yes
 SystemRequirements: the wickra-strategy-ci C ABI shared library, downloaded
     automatically at build time from the matching GitHub release; set
     WKSTRATEGYCI_INC and WKSTRATEGYCI_LIB to build against a local one instead.
-Depends: R (>= 3.5)
+Depends: R (>= 4.1)
 Config/roxygen2/version: 8.0.0
