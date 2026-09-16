@@ -34,13 +34,13 @@ echo "==> Node (bindings/node/package-lock.json)"
 (cd bindings/node && npm install --package-lock-only --no-audit --no-fund)
 
 echo "==> Python (.github/requirements/ci-dev.txt via uv)"
-UV_VERSION="0.12.13"
+UV_VERSION="0.12.15"
 uv_sha256() {
   case "$1" in
-    x86_64-unknown-linux-gnu)  echo "173d95a0c32d18c896c46ba6fafbf3cf9c14ab74b033f81b76c883ef492a976b" ;;
-    aarch64-unknown-linux-gnu) echo "9ff6b9d4665edcdd3a88dcc73cd1eb641754deb927f14e8c62ebfde6bf4f5f5e" ;;
-    aarch64-apple-darwin)      echo "51c6170e8e3a01cef9f33b94f582b7b81ac65046f55d40afb35f9cff5a68c179" ;;
-    x86_64-apple-darwin)       echo "5296d5aa2b9143360405eea866f8ef4d5dc8986b164eb0dc35e8f876a9304d30" ;;
+    x86_64-unknown-linux-gnu)  echo "f97935763c04be3e692460a7aaeaaab8fc3b78fcf8b389da820b38ae7423a638" ;;
+    aarch64-unknown-linux-gnu) echo "0e9a3499b0587d449c9ff684c0160da607826e4af1cee220bc87f378702d3e08" ;;
+    aarch64-apple-darwin)      echo "dc304b9ed1b24174572290fba60ac3f6fe63c73a671f0439e62a91375841964d" ;;
+    x86_64-apple-darwin)       echo "e9ca61775532368fe518ab03e7a354c7ecab8ccb3c7d941c775fcc4a362b801b" ;;
     *)                         echo "" ;;
   esac
 }
