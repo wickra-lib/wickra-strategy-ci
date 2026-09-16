@@ -37,6 +37,20 @@ updates:
     groups:
       node-binding:
         patterns: ["*"]
+  - package-ecosystem: npm
+    directory: "/examples/node"
+    schedule:
+      interval: monthly
+      time: "06:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "deps(npm)"
+    groups:
+      node-example:
+        patterns: ["*"]
 
   # Python binding pip dependencies.
   - package-ecosystem: pip
@@ -96,7 +110,7 @@ updates:
   # C# binding (NuGet). The published wrapper is a thin C-ABI wrapper with no
   # external packages; the test project pulls xunit and Microsoft.NET.Test.Sdk.
   - package-ecosystem: nuget
-    directory: "/bindings/csharp/Wickra.StrategyCi.Tests"
+    directory: "/bindings/csharp/WickraStrategyCi.Tests"
     schedule:
       interval: monthly
       time: "06:00"
