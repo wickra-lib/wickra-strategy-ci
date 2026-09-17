@@ -6,6 +6,40 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- **wickra-backtest-core 0.1.6, pinned exactly, from crates.io everywhere.** The
+  workspace's caret `0.1.4` that `cargo update` could have moved and nobody did
+  now names the release the family is on with the `=` every sibling uses, and
+  `fuzz/Cargo.toml` -- which took the same crate from the backtest repository's
+  git HEAD, so the fuzz targets exercised an unreleased engine rather than the
+  one the workspace pins -- names that release too. The lock follows.
+- **The Python 3.9 CI row installs no pytest.** One `ci-dev.txt` compiled for
+  3.9 served every matrix row, which held pytest at 8.4.2 (below the fix for
+  GHSA-6w46-j5rx-g56g) for 3.13 as well and needed an OSV suppression to say
+  so. The lock is split the way the family's is -- `ci-dev-py3.txt` with
+  pytest 9.1.1 for 3.10 and up, `ci-dev-py39.txt` with maturin alone -- and the
+  3.9 row runs the same four modules through
+  `bindings/python/tests/run_without_pytest.py`: plain functions, plain asserts.
+  The suppression is gone with the exposure.
+- **The repository spells shared things the way the family does.** A cross-repo
+  scan lined the 24 wickra-lib repositories up and this one also differed in:
+  `Microsoft.NET.Test.Sdk` 18.7.0 and `xunit.runner.visualstudio` 3.1.5 where
+  the family tests with 18.9.0 / 4.0.0, the Maven compiler and surefire plugins
+  one line behind (3.16.0 / 3.6.0), `@napi-rs/cli` ^3.8.6 against ^3.9.0, the
+  C example's `CMAKE_CXX_STANDARD` 14 where the family builds with 17, the
+  example job running the newest Go and Java rather than the floors (`go 1.23`,
+  `release 22`, `dotnet 8.0.x` now), the fuzz job on a rolling nightly rather
+  than the family's pinned `nightly-2026-07-01`, and `examples/node` absent from
+  Dependabot.
+
+### Fixed
+
+- **Dependabot never updated the C# test project.** `dependabot.yml` named
+  `/bindings/csharp/Wickra.StrategyCi.Tests`; the directory is
+  `WickraStrategyCi.Tests`, so the nuget entry matched nothing and was skipped
+  without a word. It names the real path now.
+
 ### Fixed
 
 - **The Java binding loads the library it ships.** The jar carries the native
