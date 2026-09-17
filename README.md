@@ -28,11 +28,15 @@
 catch regressions in CI, and property-test it against fuzzed market data — in ten
 languages, plus a reusable composite GitHub Action.
 
+> **▶ Live demos:** the backtester compiled to WebAssembly, an equity curve building bar by bar — **[backtest-live.wickra.org](https://backtest-live.wickra.org)**;
+> one StrategySpec side by side in Python, Rust, JS and Go — **[playground.wickra.org](https://playground.wickra.org)**;
+> all 514 indicators of the core over a real Binance feed — **[live.wickra.org](https://live.wickra.org)**. Zero backend, all of them.
+
 **Part of the [Wickra ecosystem](https://github.com/wickra-lib).** Strategy-CI
-> is the test harness for the deterministic
-> [wickra-backtest](https://github.com/wickra-lib/wickra-backtest) engine: it runs
-> a strategy through the engine, pins the resulting `BacktestReport`, and fails
-> the build when the numbers drift.
+is the test harness for the deterministic
+[wickra-backtest](https://github.com/wickra-lib/wickra-backtest) engine: it runs
+a strategy through the engine, pins the resulting `BacktestReport`, and fails
+the build when the numbers drift.
 
 ```bash
 # Run a directory of strategy tests against a directory of OHLCV data.
