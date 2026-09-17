@@ -26,7 +26,7 @@ The **backtest engine** whose reports this tool pins is documented in
 forwards the `StrategySpec` verbatim and never parses it, so the spec's own
 schema is defined there, not here.
 
-## Editing
+## Editing the docs
 
 Open a pull request against this repository; there is no separate site to update
 for these pages. Changes that touch the wire format also need a `CHANGELOG.md`

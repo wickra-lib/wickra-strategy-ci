@@ -37,7 +37,7 @@ ts(i)    = 1_700_000_000 + i * 3600
 | sym-05 | 75   | 6   | 8.0 | 0.15  | 600    |
 | sym-06 | 120  | 12  | 4.5 | 0.02  | 2000   |
 
-## Regenerating (two stages, never by hand)
+## Blessing
 
 1. **Report golden** — writes `expected` into each `tests/*.json`:
 

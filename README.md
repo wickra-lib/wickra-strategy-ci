@@ -19,18 +19,16 @@
 [![OpenSSF Scorecard](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/scorecard.svg)](https://scorecard.dev/viewer/?uri=github.com/wickra-lib/wickra-strategy-ci)
 [![OpenSSF Best Practices](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/best-practices.svg)](https://www.bestpractices.dev)
 [![Build provenance](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/provenance.svg)](https://github.com/wickra-lib/wickra-strategy-ci/attestations)
-[![Docs](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/docs.svg)](https://wickra.org)
+[![Docs](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/docs.svg)](https://strategy-ci.wickra.org)
 [![Verified across 10 languages](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/verified.svg)](golden/)
 
 ---
-
-# Wickra Strategy-CI
 
 **Jest for trading strategies.** Golden-pin your strategy's backtest report,
 catch regressions in CI, and property-test it against fuzzed market data — in ten
 languages, plus a reusable composite GitHub Action.
 
-> **Part of the [Wickra ecosystem](https://github.com/wickra-lib).** Strategy-CI
+**Part of the [Wickra ecosystem](https://github.com/wickra-lib).** Strategy-CI
 > is the test harness for the deterministic
 > [wickra-backtest](https://github.com/wickra-lib/wickra-backtest) engine: it runs
 > a strategy through the engine, pins the resulting `BacktestReport`, and fails
@@ -44,6 +42,23 @@ wickra-strategy-ci run tests/ --data data/
 # Re-pin the goldens after a change you meant to make.
 wickra-strategy-ci bless tests/ --data data/
 ```
+
+## Status
+
+**0.1.3 — the current release.** The core, the CLI, all ten language bindings,
+the byte-exact golden corpus, property + fuzz tests, benchmarks and one runnable
+example per language are in place and green across the full CI matrix (10
+languages × 3 OS). [ROADMAP.md](ROADMAP.md) has what is done, what is open and
+what is not planned.
+
+## Documentation
+
+See [docs/](docs/) — [`TESTS.md`](docs/TESTS.md) for the test model,
+[`TOLERANCES.md`](docs/TOLERANCES.md) for the golden diff,
+[`PROPERTIES.md`](docs/PROPERTIES.md) for the invariants,
+[`FUZZING.md`](docs/FUZZING.md) for the perturbations,
+[`GITHUB_ACTION.md`](docs/GITHUB_ACTION.md) for the action, and
+[`Cookbook.md`](docs/Cookbook.md) for task-shaped recipes.
 
 ## Why
 
@@ -59,6 +74,23 @@ snapshot test. Strategy-CI turns that into a workflow:
   floor, Sharpe or PnL clears a threshold, a named field stays in range.
 - **Fuzz tests** — perturb the input data with a seeded PRNG and re-run, catching
   strategies that only work on one specific history.
+
+## Quickstart
+
+Install the CLI, point it at a directory of test files and a directory of
+candle data, and pin the reports once:
+
+```bash
+cargo install wickra-strategy-ci
+
+wickra-strategy-ci list  golden/tests/                       # the test ids found under a path
+wickra-strategy-ci bless golden/tests/ --data golden/data/   # pin every report (first run)
+wickra-strategy-ci run   golden/tests/ --data golden/data/   # fail when a report moves
+```
+
+`run` exits non-zero when any pinned report drifts further than its tolerances
+allow, when a property check fails, or when a fuzzed re-run breaks — which is
+what makes it a CI gate. The next section is what a test file looks like.
 
 ## A test is a file, not a function
 
@@ -110,6 +142,22 @@ across minor versions, which may break.
 
 See [docs/GITHUB_ACTION.md](docs/GITHUB_ACTION.md) for the full inputs/outputs.
 
+## How it works
+
+A `StrategyTest` is data, not code: a serde model carrying an opaque
+`StrategySpec` sub-JSON. Strategy-CI forwards that spec verbatim to
+`wickra-backtest::run`, takes the returned `BacktestReport`, and asserts it
+against the test's expectations and properties. Because the engine is
+deterministic and every binding forwards the core's response string unchanged,
+results are reproducible byte-for-byte across languages and between the parallel
+(rayon) and sequential (WASM) execution paths.
+
+The diff works on **numeric leaves**. Both reports are flattened to a sorted map
+of numbers — `metrics.sharpe`, `equity[3].equity` — rounded to eight decimals and
+compared field by field, reporting mismatches, fields that vanished and fields
+that appeared. Strings, booleans and nulls are not pinned, so a report field that
+is text is outside what a golden can catch.
+
 ## Use in any language
 
 The core is exposed as a JSON-over-C-ABI data API in ten languages: Rust, Python,
@@ -128,57 +176,6 @@ go get github.com/wickra-lib/wickra-strategy-ci/bindings/go   # Go
 Java ships to Maven Central (`org.wickra:wickra-strategy-ci`), R to r-universe
 (`wickrastrategyci`), and the C ABI ships as a per-platform library with a
 vendored header. See each binding's `README.md` under [`bindings/`](bindings/).
-
-## How it works
-
-A `StrategyTest` is data, not code: a serde model carrying an opaque
-`StrategySpec` sub-JSON. Strategy-CI forwards that spec verbatim to
-`wickra-backtest::run`, takes the returned `BacktestReport`, and asserts it
-against the test's expectations and properties. Because the engine is
-deterministic and every binding forwards the core's response string unchanged,
-results are reproducible byte-for-byte across languages and between the parallel
-(rayon) and sequential (WASM) execution paths.
-
-The diff works on **numeric leaves**. Both reports are flattened to a sorted map
-of numbers — `metrics.sharpe`, `equity[3].equity` — rounded to eight decimals and
-compared field by field, reporting mismatches, fields that vanished and fields
-that appeared. Strings, booleans and nulls are not pinned, so a report field that
-is text is outside what a golden can catch.
-
-## Benchmarks
-
-A suite is cheap enough to gate every pull request. Median wall-clock for
-`run_suite`, parallel path, from the `strategy-ci-bench` criterion suite:
-
-| Dataset | Tests | Suite | Per test |
-|---------|-------|-------|----------|
-| small (200 bars)  | 100  | 13.4 ms | ~134 µs |
-| small (200 bars)  | 1000 | 143 ms  | ~143 µs |
-| large (2000 bars) | 100  | 156 ms  | ~1.56 ms |
-| large (2000 bars) | 1000 | 1.24 s  | ~1.24 ms |
-
-Per-test cost is dominated by the engine walking the price history — roughly
-linear in bar count, near-flat in test count once the rayon pool is saturated.
-The golden diff and property checks are `O(fields)` on top. A `fuzz` axis
-multiplies a test's cost by its `runs`. Full method and caveats in
-[BENCHMARKS.md](BENCHMARKS.md); reproduce with `cargo bench -p strategy-ci-bench`.
-
-## Requirements
-
-| To use | You need |
-|--------|----------|
-| The CLI or the GitHub Action | Nothing — the action installs a prebuilt binary, or builds from git as a fallback. |
-| Rust | 1.86 or newer (workspace MSRV). |
-| Python | 3.9 or newer. |
-| Node.js | 22 or newer. |
-| Go | 1.23 or newer. |
-| Java | 22 or newer. |
-| R | 4.1 or newer. |
-| C / C++ / C# / R | The C ABI library plus its vendored header; see each binding's `README.md`. |
-
-Building from source additionally needs a Rust toolchain; the polyglot bindings
-need their own toolchain (`maturin`, `napi`, `wasm-pack`, `dotnet`, `go`, Maven,
-`R CMD`) only for the binding you are building.
 
 ## Project layout
 
@@ -231,6 +228,41 @@ Every binding runs the **same** `golden/` fixtures through its own
 languages agree byte-for-byte — not just that each one runs. The CLI is covered
 end-to-end against `golden/tests` in CI.
 
+## Requirements
+
+| To use | You need |
+|--------|----------|
+| The CLI or the GitHub Action | Nothing — the action installs a prebuilt binary, or builds from git as a fallback. |
+| Rust | 1.86 or newer (workspace MSRV). |
+| Python | 3.9 or newer. |
+| Node.js | 22 or newer. |
+| Go | 1.23 or newer. |
+| Java | 22 or newer. |
+| R | 4.1 or newer. |
+| C / C++ / C# / R | The C ABI library plus its vendored header; see each binding's `README.md`. |
+
+Building from source additionally needs a Rust toolchain; the polyglot bindings
+need their own toolchain (`maturin`, `napi`, `wasm-pack`, `dotnet`, `go`, Maven,
+`R CMD`) only for the binding you are building.
+
+## Benchmarks
+
+A suite is cheap enough to gate every pull request. Median wall-clock for
+`run_suite`, parallel path, from the `strategy-ci-bench` criterion suite:
+
+| Dataset | Tests | Suite | Per test |
+|---------|-------|-------|----------|
+| small (200 bars)  | 100  | 13.4 ms | ~134 µs |
+| small (200 bars)  | 1000 | 143 ms  | ~143 µs |
+| large (2000 bars) | 100  | 156 ms  | ~1.56 ms |
+| large (2000 bars) | 1000 | 1.24 s  | ~1.24 ms |
+
+Per-test cost is dominated by the engine walking the price history — roughly
+linear in bar count, near-flat in test count once the rayon pool is saturated.
+The golden diff and property checks are `O(fields)` on top. A `fuzz` axis
+multiplies a test's cost by its `runs`. Full method and caveats in
+[BENCHMARKS.md](BENCHMARKS.md); reproduce with `cargo bench -p strategy-ci-bench`.
+
 ## Ecosystem
 
 Strategy-CI is one repo in the [Wickra](https://github.com/wickra-lib) family:
@@ -244,15 +276,6 @@ Strategy-CI is one repo in the [Wickra](https://github.com/wickra-lib) family:
 | [wickra-synth](https://github.com/wickra-lib/wickra-synth) | Deterministic synthetic market data, useful as fuzz input. |
 | [wickra-exchange](https://github.com/wickra-lib/wickra-exchange) | Live and historical exchange connectivity. |
 
-## Documentation
-
-See [docs/](docs/) — [`TESTS.md`](docs/TESTS.md) for the test model,
-[`TOLERANCES.md`](docs/TOLERANCES.md) for the golden diff,
-[`PROPERTIES.md`](docs/PROPERTIES.md) for the invariants,
-[`FUZZING.md`](docs/FUZZING.md) for the perturbations,
-[`GITHUB_ACTION.md`](docs/GITHUB_ACTION.md) for the action, and
-[`Cookbook.md`](docs/Cookbook.md) for task-shaped recipes.
-
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) and the
@@ -264,8 +287,20 @@ Report vulnerabilities per [SECURITY.md](SECURITY.md).
 
 ## License
 
-Dual-licensed under either [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE), at
-your option.
+Licensed under either of
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or
+  <http://www.apache.org/licenses/LICENSE-2.0>)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
+
+at your option. Use it, fork it, modify it, redistribute it — commercially or
+not — file issues, send pull requests; all welcome.
+
+### Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.
 
 ## Disclaimer
 
