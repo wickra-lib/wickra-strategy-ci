@@ -81,7 +81,7 @@ Install the CLI, point it at a directory of test files and a directory of
 candle data, and pin the reports once:
 
 ```bash
-cargo install wickra-strategy-ci
+cargo install wickra-strategy-ci-cli      # the crate; the binary is wickra-strategy-ci
 
 wickra-strategy-ci list  golden/tests/                       # the test ids found under a path
 wickra-strategy-ci bless golden/tests/ --data golden/data/   # pin every report (first run)
