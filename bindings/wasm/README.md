@@ -36,7 +36,7 @@ The output lands in `pkg/`.
 ## Quick start
 
 ```js
-import init, { Session } from "./pkg/wickra_strategy_ci_wasm.js";
+import init, { Session } from "wickra-strategy-ci-wasm";
 
 await init();
 const session = new Session();

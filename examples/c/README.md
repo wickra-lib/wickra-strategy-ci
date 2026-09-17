@@ -25,12 +25,23 @@ A static library (`libwickra_strategy_ci.a` / `wickra_strategy_ci.lib`) is emitt
 
 ## Build and run the examples
 
-With CMake, as the CI C ABI job does:
+### With CMake (portable, used by CI)
 
 ```sh
 cmake -S examples/c -B examples/c/build
 cmake --build examples/c/build --config Release
 ctest --test-dir examples/c/build -C Release --output-on-failure
+```
+
+### Directly with a compiler
+
+```sh
+# Linux / macOS
+cc examples/c/run.c -I bindings/c/include -L target/release -lwickra_strategy_ci -lm -o run
+LD_LIBRARY_PATH=target/release ./run        # macOS: DYLD_LIBRARY_PATH
+
+# Windows (MinGW gcc, linking the DLL directly)
+gcc examples/c/run.c -I bindings/c/include target/release/wickra_strategy_ci.dll -lm -o run.exe
 ```
 
 ## The examples
