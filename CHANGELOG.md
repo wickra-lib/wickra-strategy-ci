@@ -10,6 +10,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **Family pins follow the owners' releases:** wickra-backtest-core =0.1.6 -> =0.1.7. No code of this repository changes; the engine it links is the one those releases ship.
 - **wickra-backtest-core 0.1.6, pinned exactly, from crates.io everywhere.** The
   workspace's caret `0.1.4` that `cargo update` could have moved and nobody did
   now names the release the family is on with the `=` every sibling uses, and
