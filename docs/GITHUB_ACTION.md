@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: wickra-lib/wickra-strategy-ci@v0.1.3
+      - uses: wickra-lib/wickra-strategy-ci@v0.1.4
         with:
           tests: tests          # a StrategyTest file or a directory of them
           data: data            # a directory of <SYMBOL>.csv OHLCV files
@@ -50,7 +50,7 @@ Consume it in a later step:
 
 ```yaml
       - id: sci
-        uses: wickra-lib/wickra-strategy-ci@v0.1.3
+        uses: wickra-lib/wickra-strategy-ci@v0.1.4
         with: { tests: tests, data: data, format: json }
       - run: echo '${{ steps.sci.outputs.result }}' | jq '.failed'
 ```
