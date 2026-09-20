@@ -4,14 +4,14 @@
 
 [![CI](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/ci.svg)](https://github.com/wickra-lib/wickra-strategy-ci/actions/workflows/ci.yml)
 [![codecov](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/codecov.svg)](https://codecov.io/gh/wickra-lib/wickra-strategy-ci)
-[![Go module](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/go.svg)](https://pkg.go.dev/github.com/wickra-lib/wickra-strategy-ci/bindings/go)
+[![Go module](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/go.svg)](https://pkg.go.dev/github.com/wickra-lib/wickra-strategy-ci-go)
 [![License: MIT OR Apache-2.0](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-strategy-ci/license.svg)](https://github.com/wickra-lib/wickra-strategy-ci#license)
 
 # Wickra Strategy-CI — Go
 
 ---
 
-**Jest for trading strategies — for Go. `go get github.com/wickra-lib/wickra-strategy-ci/bindings/go` — over the C ABI via cgo, prebuilt library bundled in the module.**
+**Jest for trading strategies — for Go. `go get github.com/wickra-lib/wickra-strategy-ci-go` — over the C ABI via cgo, prebuilt library bundled in the module.**
 
 Go bindings for the Wickra Strategy-CI test runner over its C ABI hub via cgo. A
 `Session` drives the deterministic core over a JSON boundary, so the result is
