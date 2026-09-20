@@ -174,7 +174,7 @@ cargo add wickra-strategy-ci-core      # Rust
 pip install wickra-strategy-ci         # Python
 npm install wickra-strategy-ci         # Node.js
 dotnet add package Wickra.StrategyCi   # C#
-go get github.com/wickra-lib/wickra-strategy-ci/bindings/go   # Go
+go get github.com/wickra-lib/wickra-strategy-ci-go   # Go
 ```
 
 Java ships to Maven Central (`org.wickra:wickra-strategy-ci`), R to r-universe
