@@ -49,7 +49,7 @@ wickra-strategy-ci bless tests/ --data data/
 
 ## Status
 
-**0.1.4 — the current release.** The core, the CLI, all ten language bindings,
+**0.1.5 — the current release.** The core, the CLI, all ten language bindings,
 the byte-exact golden corpus, property + fuzz tests, benchmarks and one runnable
 example per language are in place and green across the full CI matrix (10
 languages × 3 OS). [ROADMAP.md](ROADMAP.md) has what is done, what is open and
@@ -135,7 +135,7 @@ wickra-strategy-ci bless tests/ --data data/    # re-pin after an intended chang
 Run your strategy tests on every push — a failing test fails the workflow:
 
 ```yaml
-- uses: wickra-lib/wickra-strategy-ci@v0.1.4
+- uses: wickra-lib/wickra-strategy-ci@v0.1.5
   with:
     tests: tests/
     data: data/
