@@ -51,7 +51,7 @@ categories = ["finance", "development-tools::testing"]
 # wickra-data is deliberately absent. It was declared here and used by nothing:
 # the CLI reads its own CSV, and `Candle` comes from the engine, so adding the
 # dependency back would mean two crates defining the same row.
-wickra-backtest-core = "=0.1.7"
+wickra-backtest-core = "=0.1.8"
 # Workspace-internal crate, referenced by the CLI, bench and bindings.
 wickra-strategy-ci-core = { version = "0.1.5", path = "crates/wickra-strategy-ci-core" }
 # Serialization — the data-driven boundary (test/command/result as JSON).
