@@ -6,6 +6,32 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-09-23
+
+A maintenance release: the regression harness and its bindings are unchanged. It
+publishes the refreshed dependency tree and toolchain pins.
+
+### Changed
+
+- **Built on wickra-core 1.0.5.** The lock takes the indicator core's latest
+  release, reached through `wickra-backtest`; nothing here names it.
+- **Third-party dependencies refreshed.** `Cargo.lock` takes 54 crates to their
+  newest semver-compatible versions, run across the family in one pass so every repository resolves
+  the same day's versions. No manifest changed.
+- **`@napi-rs/cli` 3.10.4** for the Node binding, the family's line.
+- **uv 0.12.18** for the lockfile bootstrap in `scripts/update-lockfiles.sh`,
+  with all four platform checksums moved together.
+- **The README's static badges are served by the organization** rather than
+  hot-linked from shields.io, so they no longer break when shields is down.
+
+### Fixed
+
+- **The Go install line names the published module.** The badge and `go get`
+  in `README.md` and `bindings/go/README.md` pointed at the in-repo path
+  `github.com/wickra-lib/wickra-strategy-ci/bindings/go`, which the Go proxy never
+  serves; they now name the mirror `github.com/wickra-lib/wickra-strategy-ci-go`, as the
+  other bindings' READMEs do.
+
 ## [0.1.4] - 2026-09-18
 
 ### Changed
@@ -210,7 +236,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   because the version tooling treated `README.md` as a place a version lives and
   `docs/` as not one. A stale pin in the documentation is worse than a stale one
   in a manifest: a reader copies it.
-
 
 ## [0.1.0] - 2026-09-07
 
@@ -614,7 +639,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   supply-chain and link config (`deny.toml`, `lychee.toml`, `osv-scanner.toml`,
   `repo-metadata.toml`), and the governance and community docs.
 
-[Unreleased]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.1.4...HEAD
+[Unreleased]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.1.5...HEAD
+[0.1.5]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.1.1...v0.1.2
