@@ -116,7 +116,7 @@ fn self_diff_of_overflowing_field_is_empty() {
     // diffs empty against itself with no tolerances, even for such fields.
     assert!(round8(1e308).is_infinite());
     let report = json!({ "huge": 1e308, "neg": -1e308, "ok": 1.5 });
-    assert!(diff_reports(&report, &report, &BTreeMap::new()).is_empty());
+    assert_eq!(diff_reports(&report, &report, &BTreeMap::new()), Vec::new());
 }
 
 #[test]
@@ -127,7 +127,7 @@ fn diff_star_prefix_tolerance_matches_indexed_keys() {
         "equity_curve[*]".to_string(),
         Tolerance::Abs { value: 1e-3 },
     )]);
-    assert!(diff_reports(&expected, &actual, &tolerances).is_empty());
+    assert_eq!(diff_reports(&expected, &actual, &tolerances), Vec::new());
 }
 
 #[test]
@@ -262,8 +262,8 @@ fn a_broken_test_fails_without_taking_the_suite_down() {
         .as_deref()
         .is_some_and(|e| e.contains("does-not-exist")));
     // A test that never ran has no diff or property result behind it.
-    assert!(broken.diff.is_empty());
-    assert!(broken.property_results.is_empty());
+    assert_eq!(broken.diff, Vec::new());
+    assert_eq!(broken.property_results, Vec::new());
 
     assert!(suite.results[1].passed);
     assert!(suite.results[1].error.is_none());
@@ -288,7 +288,7 @@ fn run_test_and_bless_and_suite_end_to_end() {
 
     // No golden yet: the diff axis is skipped, so pass depends on properties.
     let result = run_test(&test, &data).unwrap();
-    assert!(result.diff.is_empty());
+    assert_eq!(result.diff, Vec::new());
     assert_eq!(result.property_results.len(), 1);
     assert!(result.passed);
 
@@ -315,7 +315,7 @@ fn fuzz_axis_runs_and_reports_clean() {
         perturbation: Perturbation::Jitter { amount: 0.001 },
     });
     let result = run_test(&test, &data).unwrap();
-    assert!(result.fuzz_failures.is_empty());
+    assert_eq!(result.fuzz_failures, Vec::new());
     assert!(result.passed);
 }
 
