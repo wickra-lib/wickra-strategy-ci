@@ -773,3 +773,44 @@ jobs:
           # Not shipped in the tarball (.Rbuildignore), so it is run explicitly
           # from the checkout, where golden/ exists.
           Rscript bindings/r/tests/golden_cross_language.R
+
+  # One stable check name for branch protection: green only when every job
+  # above succeeded or was skipped by its own condition. The advisory link
+  # checks are left out on purpose -- an outside outage must not hold a merge.
+  ci-ok:
+    name: ci-ok
+    if: always()
+    needs:
+      - test
+      - lint
+      - msrv
+      - msrv-node
+      - supply-chain
+      - coverage
+      - fuzz-smoke
+      - python-wheel-container-smoke
+      - binding-surface
+      - semver
+      - examples-smoke
+      - python
+      - node
+      - wasm
+      - c-abi
+      - go
+      - csharp
+      - java
+      - r
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Every required job passed
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          bad=$(jq -r 'to_entries[] | select(.value.result != "success" and .value.result != "skipped") | "\(.key): \(.value.result)"' <<< "$RESULTS")
+          if [ -n "$bad" ]; then
+            echo "$bad" | while read -r line; do echo "::error::$line"; done
+            exit 1
+          fi
+          echo "all $(jq length <<< "$RESULTS") jobs passed"
