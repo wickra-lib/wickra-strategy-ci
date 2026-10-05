@@ -340,33 +340,36 @@ jobs:
           fi
           cargo semver-checks "${packages[@]}"
 
-  # External link rot is non-deterministic -- third-party sites go down, rate
-  # limit, or move -- so this reports without blocking. The authoritative run is
-  # the weekly links.yml; this one catches a link broken by the pull request
-  # itself, at the moment it can still be fixed cheaply.
-  #
-  # `fail: false` is what makes that true. `continue-on-error` keeps a red job
-  # from failing the *workflow*, but the check run still concludes `failure`,
-  # and release.yml's gate reads check-run conclusions: it refuses to publish
-  # while any of them failed. So a job named "non-blocking" would have blocked
-  # every release, and blocked this one -- the release commit writes
-  # `compare/v0.1.0...HEAD` and `releases/tag/v0.1.0` into the CHANGELOG, and
-  # both 404 until the tag those links describe is pushed. That is unavoidable
-  # in principle: the changelog has to name the tag before the tag exists.
-  # lychee still lists every broken link in the job summary.
+  # Advisory heads-up on link rot in the change itself; the weekly links.yml is
+  # the full sweep. It can never turn a commit red: lychee runs with
+  # continue-on-error on the step, so a dead link -- or one that resolves only
+  # after the release, like the tag a CHANGELOG compare link names -- becomes a
+  # warning annotation and a line in the job summary, which main_status lists.
+  # A job-level continue-on-error would not do: the check run still concludes
+  # `failure`, the commit shows red and a release gate reading check runs stops.
   links:
     name: External links (non-blocking)
     timeout-minutes: 10 # backstop against a hung job, not a budget
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        id: lychee
+        continue-on-error: true
+        timeout-minutes: 8
         with:
           args: --config lychee.toml --no-progress --root-dir "${{ github.workspace }}" "*.md" "docs/*.md" "bindings/*/README.md"
-          fail: false
+          fail: true
+      - name: Report broken links as warnings
+        if: steps.lychee.outcome == 'failure'
+        run: |
+          if [ -f lychee/out.md ]; then
+            grep -E '^\* \[' lychee/out.md | head -n 30 \
+              | sed -e 's/%/%25/g' -e 's/^\* /::warning title=Broken link::/' || true
+          fi
+          echo "::warning title=Broken links::lychee did not pass; the job summary lists every finding"
 
   # examples/ carried nine runnable programs and CI ran none of them. An example
   # that stopped compiling would have gone unnoticed until a reader tried it,
