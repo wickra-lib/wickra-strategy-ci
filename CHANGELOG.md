@@ -6,6 +6,19 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-06
+
+A follow-up release on the wickra 2.0 family.
+
+### Changed
+
+- **Built on wickra 2.0 and wickra-backtest 0.2.0.** `wickra-core` 2.0, the
+  formula-audit release of the indicator core, arrives through wickra-backtest;
+  the exact pin on `wickra-backtest-core` moves from =0.1.9 to =0.2.0 (root and
+  `fuzz/`); every tracked lockfile follows. Indicators the audit corrected
+  return the values of their published definitions; wickra's changelog lists
+  them, with the warmup changes and the new defaults.
+
 ## [0.1.6] - 2026-09-27
 
 A follow-up release: the regression harness and its bindings are unchanged. It
@@ -689,7 +702,8 @@ publishes the refreshed dependency tree and toolchain pins.
   supply-chain and link config (`deny.toml`, `lychee.toml`, `osv-scanner.toml`,
   `repo-metadata.toml`), and the governance and community docs.
 
-[Unreleased]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.1.6...HEAD
+[Unreleased]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.1.6...v0.2.0
 [0.1.6]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.1.3...v0.1.4

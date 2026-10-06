@@ -31,14 +31,14 @@ Maven:
 <dependency>
   <groupId>org.wickra</groupId>
   <artifactId>wickra-strategy-ci</artifactId>
-  <version>0.1.6</version>
+  <version>0.2.0</version>
 </dependency>
 ```
 
 Gradle:
 
 ```kotlin
-implementation("org.wickra:wickra-strategy-ci:0.1.6")
+implementation("org.wickra:wickra-strategy-ci:0.2.0")
 ```
 
 The native library ships prebuilt per platform inside the jar and is
