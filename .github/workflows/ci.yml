@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-26.04, windows-latest, macos-latest]
         features: ["--all-features", "--no-default-features"]
     runs-on: ${{ matrix.os }}
     # The CLI binary (wickra-strategy-ci) and the C ABI cdylib
@@ -44,7 +44,7 @@ jobs:
   lint:
     name: Format & Clippy
     timeout-minutes: 20 # backstop against a hung job, not a budget
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -60,7 +60,7 @@ jobs:
   msrv:
     name: MSRV workspace (1.86)
     timeout-minutes: 30 # backstop against a hung job, not a budget
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -80,7 +80,7 @@ jobs:
   msrv-node:
     name: MSRV node (1.88)
     timeout-minutes: 30 # backstop against a hung job, not a budget
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -94,7 +94,7 @@ jobs:
   supply-chain:
     name: Supply-chain (cargo-deny + osv-scanner)
     timeout-minutes: 30 # backstop: headroom for slow registry installs, not a budget
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -133,7 +133,7 @@ jobs:
   coverage:
     name: Coverage
     timeout-minutes: 40 # backstop against a hung job, not a budget
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -169,7 +169,7 @@ jobs:
   fuzz-smoke:
     name: Fuzz (smoke)
     timeout-minutes: 30 # backstop against a hung job, not a budget
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -217,7 +217,7 @@ jobs:
   python-wheel-container-smoke:
     name: Python wheel (${{ matrix.manylinux }} smoke)
     timeout-minutes: 30 # backstop against a hung job, not a budget
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
       matrix:
@@ -259,7 +259,7 @@ jobs:
   binding-surface:
     name: Binding surface parity
     timeout-minutes: 10 # backstop against a hung job, not a budget
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -309,7 +309,7 @@ jobs:
   semver:
     name: Public API (cargo-semver-checks)
     timeout-minutes: 30 # backstop: it builds rustdoc JSON per crate and baseline
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -350,7 +350,7 @@ jobs:
   links:
     name: External links (non-blocking)
     timeout-minutes: 10 # backstop against a hung job, not a budget
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -379,7 +379,7 @@ jobs:
   examples-smoke:
     name: Examples build
     timeout-minutes: 30 # backstop against a hung job, not a budget
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -431,7 +431,7 @@ jobs:
       # its index is stale there, apt reports
       #   E: Failed to fetch .../chrome-stable/... Hash Sum mismatch
       # and the R install dies with `sudo` exit code 100 -- which is how this
-      # job and "R on ubuntu-latest" both failed. Matched by content rather than
+      # job and "R on ubuntu-26.04" both failed. Matched by content rather than
       # filename: the image writes it as google-chrome.list or as a deb822
       # google-chrome.sources depending on the release.
       - name: Drop the apt source for Google's CDN
@@ -459,13 +459,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-26.04, windows-latest, macos-latest]
         python-version: ["3.9", "3.11", "3.12", "3.13"]
-        # GitHub builds no Python 3.9 for Ubuntu 26.04, the image ubuntu-latest
+        # GitHub builds no Python 3.9 for Ubuntu 26.04, the image ubuntu-26.04
         # moves to from 2026-10-19 (3.9 is end-of-life), so the floor's Linux
-        # cell runs on ubuntu-24.04; the other cells follow ubuntu-latest.
+        # cell runs on ubuntu-24.04; the other cells follow ubuntu-26.04.
         exclude:
-          - os: ubuntu-latest
+          - os: ubuntu-26.04
             python-version: "3.9"
         include:
           - os: ubuntu-24.04
@@ -520,7 +520,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-26.04, macos-latest, windows-latest]
         node-version: ["22", "24"]
     runs-on: ${{ matrix.os }}
     steps:
@@ -551,7 +551,7 @@ jobs:
   wasm:
     name: WASM
     timeout-minutes: 20 # backstop against a hung job, not a budget
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -583,7 +583,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-26.04, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -622,7 +622,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-26.04, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -680,7 +680,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-26.04, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -704,7 +704,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-26.04, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -729,7 +729,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-26.04, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     env:
       WKSTRATEGYCI_INC: ${{ github.workspace }}/bindings/c/include
@@ -812,7 +812,7 @@ jobs:
       - csharp
       - java
       - r
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     permissions: {}
     steps:
