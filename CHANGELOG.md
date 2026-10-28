@@ -6,6 +6,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-28
+
+A maintenance release: the strategy checks and their verdicts are unchanged.
+
+### Changed
+
+- **uv 0.13.5** for the lockfile bootstrap in `scripts/update-lockfiles.sh`.
+
 ## [0.2.0] - 2026-10-06
 
 A follow-up release on the wickra 2.0 family.
@@ -347,7 +355,6 @@ publishes the refreshed dependency tree and toolchain pins.
   identical whatever the library was compiled with. Two tests pin it, and both
   pass with the feature on and off.
 
-
 - **One broken test took the whole suite down.** `run_suite` collected its
   results with `?`, so a single test whose `dataset_ref` did not resolve — or
   whose spec the engine rejected — made the call return `Err`. The CLI printed
@@ -385,7 +392,6 @@ publishes the refreshed dependency tree and toolchain pins.
 
 ### Fixed
 
-
 - **The WASM npm package would have published without its licence texts.**
   `wickra-strategy-ci-wasm` declares `MIT OR Apache-2.0` and its generated
   manifest listed only the three build outputs; the release staged no copies for
@@ -402,7 +408,6 @@ publishes the refreshed dependency tree and toolchain pins.
   `*.dll` — and `*.dll` does not match `*.dll.a`. A `git add -A` after an R build
   would have committed a downloaded header and a generated import library.
 
-
 - **`Cargo.lock` did not match the manifests, so `cargo build --locked` failed.**
   When the benchmark crate moved to `codspeed-criterion-compat`, the lockfile was
   not regenerated with it: `codspeed`, `codspeed-criterion-compat` and their
@@ -410,7 +415,6 @@ publishes the refreshed dependency tree and toolchain pins.
   refused to start, and the CodSpeed job could not have built its benchmarks. The
   lockfile is regenerated and `cargo build --locked --workspace --all-features`
   now succeeds.
-
 
 - The `semver` and `examples-smoke` jobs pinned `Swatinem/rust-cache` with a bare
   `# v2` comment, too coarse for Dependabot to act on; both now name v2.9.2, the
@@ -422,7 +426,6 @@ publishes the refreshed dependency tree and toolchain pins.
   and cannot work without them -- now says so where a reader meets it.
 - The README's Requirements table gained R's lower bound, which `DESCRIPTION`
   declares but the table did not repeat.
-
 
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -486,7 +489,6 @@ publishes the refreshed dependency tree and toolchain pins.
 - `scripts/update-lockfiles.sh` — the lockfiles had no regeneration script. uv is
   fetched only on request (`WKSTRATEGYCI_BOOTSTRAP_UV=1`) and its release is
   checksum-verified, rather than piping an installer into a shell.
-
 
 >>>>>>> 1570892 (ci: add the five verification scripts and the jobs that run them)
 - **The shipped R test reached outside the package.** `tests/run_tests.R` walked
@@ -613,7 +615,6 @@ publishes the refreshed dependency tree and toolchain pins.
   and passed as `body_path`. Inlined in the workflow, their `uses:` usage example
   was indistinguishable from a real unpinned step to anything auditing for them.
 
-
 =======
 >>>>>>> 1113e5e (fix: complete the binding inventory and stop the R test reaching outside its package)
 
@@ -640,7 +641,6 @@ publishes the refreshed dependency tree and toolchain pins.
   or breadth metric" and described "the screen you can't express today" — text
   carried over from `wickra-screener`. It now asks about tolerances, properties
   and perturbations.
-
 
 - `LICENSES/MIT.txt` and `LICENSES/Apache-2.0.txt` — the SPDX licence texts at
   their conventional paths, alongside the existing `LICENSE-MIT` /
@@ -675,7 +675,6 @@ publishes the refreshed dependency tree and toolchain pins.
   reach) and `examples/go` (its own module). Both would otherwise never see a
   dependency update.
 
-
 - **`strategy-ci-core`** — the data-driven test runner: a serde `StrategyTest`
   model carrying an opaque `wickra-backtest` `StrategySpec`, golden-diff with
   per-field `abs`/`rel` tolerances, invariant property checks (`no_nan`,
@@ -702,7 +701,8 @@ publishes the refreshed dependency tree and toolchain pins.
   supply-chain and link config (`deny.toml`, `lychee.toml`, `osv-scanner.toml`,
   `repo-metadata.toml`), and the governance and community docs.
 
-[Unreleased]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.1.6...v0.2.0
 [0.1.6]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.1.4...v0.1.5

@@ -41,7 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: wickra-lib/wickra-strategy-ci@v0.2.0
+      - uses: wickra-lib/wickra-strategy-ci@v0.2.1
         with:
           tests: tests/
           data: data/
