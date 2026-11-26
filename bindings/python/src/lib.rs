@@ -32,7 +32,8 @@ impl Session {
 }
 
 #[pymodule]
-fn _wickra_strategy_ci(m: &Bound<PyModule>) -> PyResult<()> {
+#[pyo3(name = "_wickra_strategy_ci")]
+fn wickra_strategy_ci_extension(m: &Bound<PyModule>) -> PyResult<()> {
     m.add_class::<Session>()?;
     m.add("__version__", wickra_strategy_ci_core::VERSION)?;
     Ok(())
