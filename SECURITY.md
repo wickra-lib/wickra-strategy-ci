@@ -17,7 +17,7 @@ Security fixes target the `main` branch and the most recent published version.
 | Version | Supported |
 |---------|-----------|
 | `main` | ✅ |
-| `0.2.1` | ✅ |
+| `0.2.2` | ✅ |
 
 ## Reporting a vulnerability
 
