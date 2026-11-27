@@ -910,9 +910,10 @@ jobs:
           shell: bash
           command: mvn -B -f bindings/java -Prelease package -DskipTests
 
-      # The JAR reached Maven Central and nowhere else, so the GitHub Release
-      # listed every other artefact and not this one. Anyone pinning a release by
-      # its assets had no Java artefact to check against.
+      # attest-jar attests this jar once Central has taken it. It is no longer
+      # staged onto the GitHub Release: the page must not wait on Maven Central,
+      # which can refuse a release the other registries already published, and
+      # the jar with its signatures lives on Central.
       - name: Upload the Maven artefacts
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
