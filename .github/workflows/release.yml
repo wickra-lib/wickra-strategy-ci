@@ -311,13 +311,18 @@ jobs:
           path: dist
           pattern: wheels-*
           merge-multiple: true
+      # PyPA's publishing action, not `maturin upload`: maturin deprecated its
+      # upload and publish commands (PyO3/maturin#2334) and builds the wheels
+      # only. Same token, same dist/ files, versions already on PyPI skipped.
+      # Its PEP 740 attestations need Trusted Publishing, not a token, so they
+      # are off; the release's own provenance attestation is unaffected.
       - name: Upload to PyPI
-        uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
         with:
-          command: upload
-          args: --skip-existing dist/*
-        env:
-          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+          packages-dir: dist/
+          skip-existing: true
+          attestations: false
+          password: ${{ secrets.PYPI_API_TOKEN }}
 
   # --------------------------------------------------------------------------
   # npm: per-platform native binaries + main meta-package
@@ -870,7 +875,12 @@ jobs:
           shell: bash
           command: |
             set -eo pipefail
-            version=$(mvn -B -q -f bindings/java help:evaluate -Dexpression=project.version -DforceStdout)
+            # Maven prints its errors on stdout, which the substitution takes;
+            # print it, or a failure here shows nothing in the log.
+            if ! version=$(mvn -B -q -f bindings/java help:evaluate -Dexpression=project.version -DforceStdout); then
+              echo "$version"
+              exit 1
+            fi
             url="https://repo1.maven.org/maven2/org/wickra/wickra-strategy-ci/${version}/wickra-strategy-ci-${version}.pom"
             if curl -sSf -o /dev/null "$url"; then
               echo "skip: org.wickra:wickra-strategy-ci:${version} is already on Maven Central"
@@ -900,9 +910,10 @@ jobs:
           shell: bash
           command: mvn -B -f bindings/java -Prelease package -DskipTests
 
-      # The JAR reached Maven Central and nowhere else, so the GitHub Release
-      # listed every other artefact and not this one. Anyone pinning a release by
-      # its assets had no Java artefact to check against.
+      # attest-jar attests this jar once Central has taken it. It is no longer
+      # staged onto the GitHub Release: the page must not wait on Maven Central,
+      # which can refuse a release the other registries already published, and
+      # the jar with its signatures lives on Central.
       - name: Upload the Maven artefacts
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -1036,8 +1047,12 @@ jobs:
     # Every producer, not just some. csharp-publish, java-publish and go-mirror
     # were missing, so their artefacts could fail to publish while the release
     # went out reporting success.
+    # java-publish is deliberately not needed: Maven Central can refuse a
+    # release (monthly publishing limits) after every other registry has
+    # published it, and the page must not wait on that. The jar lives on
+    # Central and is attested by attest-jar.
     needs: [cargo-publish, python-publish, node-publish, wasm-publish, cli-binaries,
-            c-abi-build, csharp-publish, java-publish, go-mirror]
+            c-abi-build, csharp-publish, go-mirror]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -1083,8 +1098,6 @@ jobs:
           find artifacts -type f -name "*.crate" -exec cp {} release-assets/ \;
           find artifacts -type f -name "*.cdx.json" -exec cp {} release-assets/ \;
           find artifacts -type f -name "*.nupkg" -exec cp {} release-assets/ \;
-          find artifacts -type f -name "*.jar" -exec cp {} release-assets/ \;
-          find artifacts -type f -name "*.jar.asc" -exec cp {} release-assets/ \;
           ls -lh release-assets/
           echo "asset-count=$(find release-assets/ -type f | wc -l)"
 
@@ -1143,7 +1156,7 @@ jobs:
     name: Attest build provenance
     timeout-minutes: 45
     needs: [cargo-publish, python-wheels, python-sdist, github-release,
-            csharp-publish, java-publish, c-abi-build]
+            csharp-publish, c-abi-build]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -1170,11 +1183,6 @@ jobs:
         with:
           name: nuget-package
           path: artifacts/nuget
-      - name: Download the Maven artefacts
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: java-artifacts
-          path: artifacts/java
       - name: Download the C ABI libraries
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -1190,7 +1198,6 @@ jobs:
             artifacts/python/*.whl
             artifacts/python/*.tar.gz
             artifacts/nuget/*.nupkg
-            artifacts/java/*.jar
             artifacts/c-abi/*.tar.gz
       - name: Attach provenance bundle to the GitHub Release
         env:
@@ -1210,6 +1217,30 @@ jobs:
           cp "$BUNDLE" "$dest"
           echo "Uploading $dest to release $TAG"
           gh release upload "$TAG" "$dest" --clobber --repo "${{ github.repository }}"
+
+  # The jar is attested on its own, once Maven Central has taken it. The
+  # attestation is recorded with GitHub and attached to nothing, so re-running
+  # the Maven job later (after a refusal) never touches the published,
+  # immutable release page.
+  attest-jar:
+    name: Attest the jar's build provenance
+    timeout-minutes: 15
+    needs: [java-publish]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      attestations: write
+      contents: read
+    steps:
+      - name: Download the jar
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: java-artifacts
+          path: artifacts/java
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: artifacts/java/*.jar
 
   # --------------------------------------------------------------------------
   # Publish the drafted release LAST (immutability-ready).
