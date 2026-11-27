@@ -7,6 +7,7 @@ on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
 permissions:
@@ -14,6 +15,7 @@ permissions:
 
 jobs:
   selftest-pass:
+    if: ${{ !github.event.pull_request.draft }}
     name: action passes on the golden corpus
     timeout-minutes: 25 # backstop against a hung job, not a budget
     runs-on: ubuntu-latest
@@ -44,6 +46,7 @@ jobs:
           echo "self-test PASS: $RESULT"
 
   selftest-fail:
+    if: ${{ !github.event.pull_request.draft }}
     name: action fails on a broken test
     timeout-minutes: 25 # backstop against a hung job, not a budget
     runs-on: ubuntu-latest
