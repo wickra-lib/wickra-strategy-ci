@@ -6,8 +6,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-11-27
+
+A release of the build and release pipeline; the library code is unchanged.
+
 ### Changed
 
+- **The family pins follow the owners' releases.** `wickra-backtest-core` =0.2.2
+  -> =0.2.3 -- the exact pins this repository keeps on its siblings move to the
+  versions those repositories release in the same train, and every tracked
+  lockfile follows.
 - **The Maven sources jar no longer carries the native libraries.** The release
   workflow stages every platform's library into the resources before the
   deploy, and the sources jar packed them a second time. A release's size on
@@ -28,6 +36,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Draft pull requests start no CI.** Every job of the workflows that run
   on pull requests skips a draft, and marking it ready for review starts
   the full run.
+- **CI caches the Maven repository with restore-keys.** setup-java's own
+  cache keyed on the pom alone, so every version bump started empty and
+  fetched every plugin from Maven Central again; in a release train that ran
+  into Central's 429 throttling. A changed pom now restores the previous
+  cache and downloads only what is new.
 
 ## [0.2.2] - 2026-11-26
 
@@ -780,7 +793,8 @@ publishes the refreshed dependency tree and toolchain pins.
   supply-chain and link config (`deny.toml`, `lychee.toml`, `osv-scanner.toml`,
   `repo-metadata.toml`), and the governance and community docs.
 
-[Unreleased]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/wickra-lib/wickra-strategy-ci/compare/v0.1.6...v0.2.0
